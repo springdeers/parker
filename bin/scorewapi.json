@@ -1,0 +1,11 @@
+{
+	"svrport"     		:"8686",
+	"db_ip"       		:"127.0.0.1",
+	"db_port"     		:"3306",
+	"db_name"     		:"venue_db",
+	"db_username" 		:"root",
+	"db_userpwd"  		:"Aa123456",
+	"credit_portion" 	:"0.2",
+	"grade_portion"  	:"0.8",
+	"score_scs_refresh" :"60000"
+}

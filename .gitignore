@@ -1,0 +1,13 @@
+*.aps
+*.pch
+*.bak
+*.log
+*.ink
+*.tlog
+*.ncb
+*.pdb
+*.sdf
+*.opensdf
+*.ipch
+*.obj
+*.idb

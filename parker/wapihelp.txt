@@ -1,0 +1,13 @@
+http://www.sample.com:8686/score?cardid=xx FOR querying a card's score , the score in the db will be delete by defalut beheavior .if you just want a query ,append &queryonly=true to the param list.
+-----------------------------------------
+http://www.sample.com:8686/scenestatus?sceneid=xx&mcuid=yy&starttime=yyyy-mm-dd hh:mm:ss&endtime=yyyy-mm-dd hh:mm:ss FOR querying a scene's history status.
+-----------------------------------------
+http://www.sample.com:8686/scenes?sceneid=xx FOR querying a scene's infomation. if sceneid=0 then all scenes returned.
+-----------------------------------------
+http://www.sample.com:8686/scenestatus?sceneid=xx&mcuid==yy&starttime=YYYY-MM-DD HH:MM:SS&endtime=YYYY-MM-DD HH:MM:SS  FOR querying a scene's history status. if mcuid=0 then all the scene' status is returned.
+-----------------------------------------
+http://www.sample.com:8686/useract?cardid=xx FOR querying a user's history activity , the records in the db will be delete by defalut beheavior .if you just want a query ,append &queryonly=true to the param list.
+-----------------------------------------
+http://www.sample.com:8686/analyscene?sceneid=xx FOR querying a scene's analysis results.
+-----------------------------------------
+http://www.sample.com:8686/help FOR a help list.
