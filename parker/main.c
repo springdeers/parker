@@ -1,4 +1,4 @@
-// scorewapi.cpp : 定义控制台应用程序的入口点。
+// parker.cpp : 定义控制台应用程序的入口点。
 //
 
 #include "stdafx.h"
@@ -40,9 +40,9 @@ void init_winsocklib()
 
 int _tmain(int argc, _TCHAR* argv[])
 {	
-	BOOL bconf = setup_config("scorewapi.json",&g_conf);
+	BOOL bconf = setup_config("parker.json",&g_conf);
 	if (!bconf) {
-		printf("err : load ./scorewapi.json file failed.  exit!\n");
+		printf("err : load ./parker.json file failed.  exit!\n");
 		exit(1);
 	}
 	

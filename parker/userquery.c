@@ -30,6 +30,7 @@ scores_scs_st scores_scs;
 
 static int user_test(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 static int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
+static int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 static int user_about(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 static int user_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 static int user_scenestatus(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
@@ -39,6 +40,7 @@ static int user_analyscene(struct evkeyvalq*kvq, struct evhttp_request* req, voi
 
 static route_entry_st route_map[] = {
 	{ "/user/score", user_score, "" },
+	{ "/user/backcard", user_backcard, "" },
 	{ "/user/scenestatus", user_scenestatus, "" },
 	{ "/user/scenes", user_scenes, "" },
 	{ "/user/useract", user_useract, "" },
@@ -204,7 +206,9 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	_assure_clearbuff(g_membuffer,4096);
 
-	membuff_add_printf(g_membuffer, "{\"type\":\"score\",\"code\":\"0\",\"iccard\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"rmnscene_cnt\":\"%d\",\"rmnscenes\":\"%s\"}",
+	memcpy(scores.name, "李明", strlen("李明") + 1);	// 后期数据库会整合，获取name不再需要跨数据库。此处为测试暂时写成定值
+	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
+		scores.name,
 		cardid,
 		comid,
 		finalscore.finalscore,
@@ -212,7 +216,6 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		finalscore.grade_point,
 		finalscore.scoreclass,
 		finalscore.suggestion,
-		finalscore.rmnscene_cnt,
 		finalscore.rmnscenes
 		);					
 
@@ -235,6 +238,93 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 */
 	return eRoute_success;
 }
+
+
+int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
+{
+	int i = 0, score_scs_freeflag = 0;
+	scores_st scores;
+	struct evbuffer* buf = NULL;
+	const char* cardid = evhttp_find_header(kvq, "cardid");
+	const char* comid = evhttp_find_header(kvq, "comid");		// 此处无用，只是为了向printsvr转发时方便
+	//const char* queryonly = evhttp_find_header(kvq, "queryonly");
+
+	while ((buf = evbuffer_new()) == NULL)Sleep(1);
+
+	if (cardid == NULL || req == NULL || strlen(cardid) == 0) { evbuffer_free(buf); return eRoute_failed; }
+
+	db_load_scores(mysqlconn, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
+	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
+
+	// 获取所有场景个数与学分总和
+	if (-1 == db_query_credits(mysqlconn, &scores.totalscenes, &scores.totalcredit))
+	{
+		evbuffer_free(buf);
+		printf("db_query_credits failed.\n");
+		return -1;
+	}
+
+	if (scores.totalcredit == 0)
+	{
+		evbuffer_free(buf);
+		printf("error: scores.totalcredit == 0.\n");
+		return -1;
+	}
+
+	// 获取未体验场景，构造出json串
+	// json串格式： {"remains":[{"name":"烟雾逃生"},{"name":"汽车落水"},{"name":"地震小屋"}]}
+	if (-1 == db_query_remains(mysqlconn, &scores))
+	{
+		evbuffer_free(buf);
+		printf("db_query_credits failed.\n");
+		return -1;
+	}
+
+	printf("scores->remains: %s\n", scores.remains);
+	// 最重要的改动，最新成绩算法
+	finalscore_st finalscore = { 0 };
+	get_finalscore(&scores, &finalscore);
+
+	_assure_clearbuff(g_membuffer, 4096);
+
+	memcpy(scores.name, "李明", strlen("李明") +1);	// 后期数据库会整合，获取name不再需要跨数据库。此处为测试暂时写成定值
+	/*membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
+		scores.name,
+		cardid,
+		comid,
+		finalscore.finalscore,
+		finalscore.credit_point,
+		finalscore.grade_point,
+		finalscore.scoreclass,
+		finalscore.suggestion,
+		finalscore.rmnscenes
+		);*/
+	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"backcard\",\"rslt\":\"ok\",\"cardid\":\"%s\",\"comid\":\"%s\"}",
+		scores.name,
+		cardid,
+		comid
+		);
+
+	membuff_addchar(g_membuffer, '\0');
+
+	evbuffer_add_printf(buf, membuff_data(g_membuffer));
+
+	//回复给客户端
+	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gbk");
+	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+
+	evbuffer_free(buf);
+
+	scores_freeitems(&scores);
+
+	/*if (queryonly && strcmp(queryonly, "true") == 0)
+	return eRoute_success;
+
+	db_clear_scores(mysqlconn, atoi(cardid));
+	*/
+	return eRoute_success;
+}
+
 
 int user_about(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {

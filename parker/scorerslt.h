@@ -15,6 +15,7 @@ typedef struct _score_st{
 #define _maxscore_num (128)
 
 typedef struct _scores_st{
+	char name[30];					// 体验者姓名
 	int totalcredit;				// 所有场景总学分
 	int totalscenes;				// 所有场景总数
 	int scorenum;					// 体验过后所得成绩的数量
