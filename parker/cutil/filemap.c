@@ -11,7 +11,8 @@ jfile_t j_fopen(const char *filename, const char *mode)
 #ifdef _WIN32
 	HANDLE hfilemap  = NULL;
 	LPBYTE  fhead    = NULL;
-	int64_t filesize = 0;
+	LARGE_INTEGER filesize = {0};
+
 	HANDLE hfile  = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (INVALID_HANDLE_VALUE == hfile) return NULL;
 
@@ -19,7 +20,7 @@ jfile_t j_fopen(const char *filename, const char *mode)
 
 	if(!GetFileSizeEx(hfile, &filesize)) return NULL;
 
-	if(NULL == (fhead = (LPBYTE)MapViewOfFile(hfilemap, FILE_MAP_ALL_ACCESS, 0, 0, filesize))) return NULL;
+	if(NULL == (fhead = (LPBYTE)MapViewOfFile(hfilemap, FILE_MAP_ALL_ACCESS, 0, 0, filesize.QuadPart))) return NULL;
 
 	while((file = malloc(sizeof(struct _jfile_st))) == NULL) Sleep(1);
 
@@ -73,7 +74,7 @@ int  j_flush(jfile_t jfile)
 	if(NULL != jfile->fhead) 
 	{
 #ifdef _WIN32
-		if(!FlushViewOfFile(jfile->fhead, jfile->filesize)) return -1;
+		if(!FlushViewOfFile(jfile->fhead, jfile->filesize.QuadPart)) return -1;
 		if(!FlushFileBuffers(jfile->hfile)) return -1;
 #else 
 		if(msync(jfile->fhead, jfile->filesize, MS_ASYNC) == -1) return -1;
