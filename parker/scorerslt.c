@@ -8,7 +8,7 @@
 #include "appconfig.h"
 
 extern config_st g_conf;
-extern mysqlquery_t mysqlconn;
+extern mysqlquery_t sqlobj_venue_db;
 
 
 void scores_clear(scores_t con)

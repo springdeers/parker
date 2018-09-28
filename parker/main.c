@@ -16,7 +16,7 @@
 #include "orderquery.h"
 #include "userquery.h"
 
-mysqlquery_t mysqlconn = NULL;
+mysqlquery_t sqlobj_venue_db = NULL;
 config_st    g_conf;
 log_t        g_log;
 
@@ -54,7 +54,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	init_winsocklib();
 	
-	mysqlconn = mysqldb_connect_init(g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name,mysql_querycallback);    	
+	sqlobj_venue_db = mysqldb_connect_init(g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name,mysql_querycallback);    	
 	router_setup();
 	//启动服务在地址 127.0.0.1:9000 上
 	start_httpd("0.0.0.0",g_conf.svrport , httpd_callback, NULL);
@@ -129,10 +129,10 @@ void mysql_querycallback(void* conn,int code)
 	if(code == eSqlQueryerr_errorquery||code == eSqlQueryerr_errorping){		
 		mysqlquery_t conn = NULL;
 
-		mysqldb_close(mysqlconn);
-		conn = mysqldb_connect_reinit(&mysqlconn,g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name);
+		mysqldb_close(sqlobj_venue_db);
+		conn = mysqldb_connect_reinit(&sqlobj_venue_db,g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name);
 
-		if(!mysqldb_isclosed(mysqlconn))
+		if(!mysqldb_isclosed(sqlobj_venue_db))
 			log_write(g_log, LOG_NOTICE, "connected db ok\n");
 		else
 			log_write(g_log, LOG_NOTICE, "connected db failed\n");
@@ -156,20 +156,20 @@ void ontimer(evutil_socket_t listener,short event,void* arg)
 		static int counter = 1;
 
 		if(counter++%60 == 0){	
-			if(mysqlconn == NULL){
+			if(sqlobj_venue_db == NULL){
 				char timestr[64];
 				strftime(timestr,sizeof(timestr),"%Y-%m-%d %H:%M:%S",localtime(&now));
 
-				mysqlconn = mysqldb_connect_init(g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name,mysql_querycallback);
+				sqlobj_venue_db = mysqldb_connect_init(g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name,mysql_querycallback);
 
-				if(mysqlconn)
+				if(sqlobj_venue_db)
 					log_write(g_log, LOG_NOTICE, "connect db ok.\n");
 				else
 					log_write(g_log, LOG_NOTICE, "connect db failed.\n");
 				
 			}else{
 				int pingcode;
-				pingcode = mysqldb_ping(mysqlconn);				
+				pingcode = mysqldb_ping(sqlobj_venue_db);				
 				log_write(g_log, LOG_NOTICE, "ping code %d[%s]\n",pingcode,pingcode==0?"success":"failed");
 			}
 		}

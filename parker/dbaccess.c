@@ -1,6 +1,6 @@
 #include "dbaccess.h"
 
-extern mysqlquery_t mysqlconn;
+extern mysqlquery_t sqlobj_venue_db;
 
 
 int db_query_credits(mysqlquery_t dbinst, int* cnt, int *credits)
