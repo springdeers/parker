@@ -1,4 +1,5 @@
 #include "dbaccess.h"
+#include <stdio.h>
 
 extern mysqlquery_t sqlobj_venue_db;
 
@@ -11,7 +12,7 @@ int db_query_credits(mysqlquery_t dbinst, int* cnt, int *credits)
 	if (dbinst == NULL)
 		return rt;
 
-	sprintf(sql, "SELECT COUNT(*),SUM(credit) FROM tbScene");
+	sprintf_s(sql, sizof(sql) - 1, "SELECT COUNT(*),SUM(credit) FROM tbScene");
 	rt = mysql_real_query(dbinst->m_con, sql, strlen(sql));
 
 	if (rt == 0)
@@ -47,7 +48,7 @@ int db_query_travelrname(mysqlquery_t dbinst, int cardid, char **name)
 	if (dbinst == NULL)
 		return rt;
 
-	sprintf(sql, "SELECT nickame FROM tbtraveler WHERE userid=%d",cardid);
+	sprintf(sql, sizeof(sql) - 1, "SELECT nickame FROM tbtraveler WHERE userid=%d", cardid);
 	int query = mysql_real_query(dbinst->m_con, sql, strlen(sql));
 
 	if (query == 0)
@@ -85,14 +86,13 @@ int db_query_remains(mysqlquery_t dbinst, scores_t scores)
 	if (dbinst == NULL)
 		return rt;
 
-
 	int i = 0;
+	int printnum = 0;
 	for (i = 0; i < scores->scorenum-1; i++)
 	{
-		sprintf(expression, "_id != %d && ",scores->score[i].sceneid);
-
+		printnum += sprintf_s(expression + printnum, sizeof(expression) - 1 - printnum , "_id != %d && ", scores->score[i].sceneid);
 	}
-	sprintf(expression, "_id != %d ", scores->score[i].sceneid);
+	printnum += sprintf_s(expression+printnum, sizeof(expression) - 1 - printnum , "_id != %d ", scores->score[i].sceneid);
 
 	sprintf(sql, "SELECT _name FROM tbScene WHERE %s ",expression);
 	int query = mysql_real_query(dbinst->m_con, sql, strlen(sql));
@@ -119,6 +119,7 @@ int db_query_remains(mysqlquery_t dbinst, scores_t scores)
 
 			rt = 0;
 		}
+
 		if (rt != 0)
 		{
 			cJSON_Delete(root);
@@ -128,9 +129,11 @@ int db_query_remains(mysqlquery_t dbinst, scores_t scores)
 		{
 			// 形成最终的json串，并赋值给scores->remains
 			cJSON_AddItemToObject(root, "remains", remain_array);
+
 			char * rslt = cJSON_PrintUnformatted(root);
 			strcpy_s(scores->remains, strlen(rslt) + 1, rslt);
 			free(rslt);
+
 			cJSON_Delete(root);
 		}
 		
@@ -143,15 +146,8 @@ int db_query_remains(mysqlquery_t dbinst, scores_t scores)
 		printf("db_query_remains . query error :%s", mysql_error(dbinst->m_con));
 	}
 
-	
-
 	return rt;
 }
-
-
-
-
-
 
 int db_load_scores(mysqlquery_t dbinst,int cardid,scores_t scores)
 {
@@ -482,7 +478,7 @@ int db_clear_visitor_activtiy(mysqlquery_t dbinst,int cardid)
 	if(dbinst == NULL || cardid <0)
 		return rt;
 
-	printn += sprintf(sql+printn,"DELETE FROM tbVisitorActivity where _userid=%d",cardid);
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn -1, "DELETE FROM tbVisitorActivity where _userid=%d", cardid);
 
 	rt = mysql_real_query(dbinst->m_con,sql,strlen(sql));
 
@@ -505,7 +501,7 @@ int db_load_statistic_scene_scores(mysqlquery_t dbinst,int sceneid,scoredeploy_s
 	if(dbinst == NULL || sceneid <0 || out == NULL)
 		return rt;
 
-	printn += sprintf(sql+printn,"SELECT _sceneid,_json_score,_time FROM tbStatisticSceneScore where _sceneid=%d",sceneid);
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn -1, "SELECT _sceneid,_json_score,_time FROM tbStatisticSceneScore where _sceneid=%d", sceneid);
 
 	rt = mysql_real_query(dbinst->m_con,sql,strlen(sql));
 
@@ -517,7 +513,7 @@ int db_load_statistic_scene_scores(mysqlquery_t dbinst,int sceneid,scoredeploy_s
 		{
 			out->sceneid = sceneid;
 
-			strncpy(out->buffer,dbinst->m_row[1],sizeof(out->buffer));
+			strncpy_s(out->buffer, sizeof(out->buffer), dbinst->m_row[1], sizeof(out->buffer));
 		}
 		mysql_free_result(dbinst->m_res);
 	}else{
@@ -539,7 +535,7 @@ int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_s
 	if(dbinst == NULL || sceneid <0 || out == NULL)
 		return rt;
 
-	printn += sprintf(sql+printn,"SELECT _sceneid,_json_visitor,_time FROM tbStatisticSceneVisitor where _sceneid=%d",sceneid);
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn - 1,"SELECT _sceneid,_json_visitor,_time FROM tbStatisticSceneVisitor where _sceneid=%d", sceneid);
 
 	rt = mysql_real_query(dbinst->m_con,sql,strlen(sql));
 
@@ -551,7 +547,7 @@ int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_s
 		{
 			out->sceneid = sceneid;
 
-			strncpy(out->buffer,dbinst->m_row[1],sizeof(out->buffer));
+			strncpy_s(out->buffer, sizeof(sql) - printn - 1, dbinst->m_row[1], sizeof(out->buffer));
 		}
 		mysql_free_result(dbinst->m_res);
 	}else{
