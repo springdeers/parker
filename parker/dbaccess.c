@@ -39,7 +39,7 @@ int db_query_credits(mysqlquery_t dbinst, int* cnt, int *credits)
 
 
 // 从user_info_db中获取游客姓名即nickname
-int db_query_travelrname(mysqlquery_t dbinst, int cardid, int **name)
+int db_query_travelrname(mysqlquery_t dbinst, int cardid, char **name)
 {
 	char sql[512] = { 0 };
 	int  rt = -1;

@@ -31,7 +31,7 @@ int db_load_scores_scs(mysqlquery_t dbinst,scores_scs_t scores);
 
 
 int db_query_remains(mysqlquery_t dbinst, scores_t scores);
-int db_query_credits(mysqlquery_t dbinst, int cnt, int* credits);
-int db_query_travelrname(mysqlquery_t dbinst, int* cnt, int *credits);
+int db_query_credits(mysqlquery_t dbinst, int* cnt, int* credits);
+int db_query_travelrname(mysqlquery_t dbinst, int cardid, char **name);
 
 #endif
