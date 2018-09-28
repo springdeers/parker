@@ -204,6 +204,7 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	finalscore_st finalscore = {0};
 	memcpy(finalscore.name, name, strlen(name) + 1);
 	free(name);
+
 	get_finalscore(&scores, &finalscore);
 
 	_assure_clearbuff(g_membuffer,4096);
@@ -295,6 +296,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	finalscore_st finalscore = { 0 };
 	memcpy(finalscore.name, name, strlen(name) + 1);
 	free(name);
+
 	get_finalscore(&scores, &finalscore);
 
 	_assure_clearbuff(g_membuffer, 4096);
