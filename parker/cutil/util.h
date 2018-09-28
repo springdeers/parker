@@ -263,7 +263,7 @@ typedef struct _jfile_st {
 	char   *fhead;
 	int    hfile;
 #endif 
-	int64_t filesize;
+	LARGE_INTEGER filesize;
 } *jfile_t;
 
 JABBERD2_API jfile_t j_fopen(const char *filename, const char *mode);
