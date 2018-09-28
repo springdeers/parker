@@ -165,9 +165,11 @@
     <ClInclude Include="cardquery.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="cutil\jlist.h" />
+    <ClInclude Include="cutil\mempool.h" />
     <ClInclude Include="cutil\pool.h" />
     <ClInclude Include="cutil\syslog.h" />
     <ClInclude Include="cutil\util.h" />
+    <ClInclude Include="cutil\xhash.h" />
     <ClInclude Include="datatransfer.h" />
     <ClInclude Include="dbaccess.h" />
     <ClInclude Include="job.h" />
@@ -209,12 +211,14 @@
     <ClCompile Include="cutil\log.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="cutil\mempool.c" />
     <ClCompile Include="cutil\pool.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="cutil\syslog.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="cutil\xhash.c" />
     <ClCompile Include="datatransfer.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
