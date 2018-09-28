@@ -193,7 +193,7 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	// 获取游客姓名
 	char* name = NULL;
-	if (-1 == db_query_travelrname(sqlobj_userinfo_db, atoi(cardid), &name))
+	if (-1 == db_query_travelername(sqlobj_userinfo_db, atoi(cardid), &name))
 	{
 		evbuffer_free(buf);
 		printf("db_query_travelrname failed.\n");
@@ -285,7 +285,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	}
 
 	char* name = NULL;
-	if (-1 == db_query_travelrname(sqlobj_userinfo_db, atoi(cardid), &name))
+	if (-1 == db_query_travelername(sqlobj_userinfo_db, atoi(cardid), &name))
 	{
 		evbuffer_free(buf);
 		printf("db_query_travelrname failed.\n");
