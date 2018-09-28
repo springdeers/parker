@@ -26,6 +26,7 @@ typedef int(*jlistpredict_t)(void* pdata,void* param);
 typedef int(*jlistwalk_t)   (void* pdata, listnode_t,void* param);
 
 jlist_t jlist_new();
+
 void    jlist_free(jlist_t);
 
 jlist_t jlist_push(jlist_t jlist, void*pdata);

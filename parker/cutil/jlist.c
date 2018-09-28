@@ -60,8 +60,6 @@ jlist_t jlist_push(jlist_t jlist, void*pdata)
 	return jlist;
 }
 
-
-
 void*   jlist_pull(jlist_t jlist)
 {
 	void* rt = 0;
