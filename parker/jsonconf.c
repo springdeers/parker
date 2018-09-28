@@ -48,30 +48,50 @@ BOOL setup_config(char* jsonfile,config_t cfg){
 		if(item == NULL) break;
 		cfg->svrport = atoi(item->valuestring);
 
-		item = cJSON_GetObjectItem(json,"db_ip");
+		// venue_db 相关信息
+		item = cJSON_GetObjectItem(json,"venue_db_ip");
 		if(item == NULL) break;
-		cfg->db_ip = _strdup(item->valuestring);
+		cfg->venue_db_ip = _strdup(item->valuestring);
 
-		item = cJSON_GetObjectItem(json,"db_port");
+		item = cJSON_GetObjectItem(json,"venue_db_port");
 		if(item == NULL) break;
-		cfg->db_port = atoi(item->valuestring);
+		cfg->venue_db_port = atoi(item->valuestring);
 
-		item = cJSON_GetObjectItem(json,"db_name");
+		item = cJSON_GetObjectItem(json,"venue_db_name");
 		if(item == NULL) break;
-		cfg->db_name = _strdup(item->valuestring);
+		cfg->venue_db_name = _strdup(item->valuestring);
 
-		item = cJSON_GetObjectItem(json,"db_username");
+		item = cJSON_GetObjectItem(json,"venue_db_username");
 		if(item == NULL) break;
-		cfg->db_username = _strdup(item->valuestring);
+		cfg->venue_db_username = _strdup(item->valuestring);
 				
-		item = cJSON_GetObjectItem(json,"db_userpwd");
+		item = cJSON_GetObjectItem(json,"venue_db_userpwd");
 		if(item == NULL) break;
-		cfg->db_userpwd = _strdup(item->valuestring);
+		cfg->venue_db_userpwd = _strdup(item->valuestring);
 
-		item = cJSON_GetObjectItem(json, "score_scs_refresh");
+
+		// user_info_db相关信息
+		item = cJSON_GetObjectItem(json, "userinfo_db_ip");
 		if (item == NULL) break;
-		cfg->score_scs_refresh = atoi(item->valuestring);
+		cfg->userinfo_db_ip = _strdup(item->valuestring);
 
+		item = cJSON_GetObjectItem(json, "userinfo_db_port");
+		if (item == NULL) break;
+		cfg->userinfo_db_port = atoi(item->valuestring);
+
+		item = cJSON_GetObjectItem(json, "userinfo_db_name");
+		if (item == NULL) break;
+		cfg->userinfo_db_name = _strdup(item->valuestring);
+
+		item = cJSON_GetObjectItem(json, "userinfo_db_username");
+		if (item == NULL) break;
+		cfg->userinfo_db_username = _strdup(item->valuestring);
+
+		item = cJSON_GetObjectItem(json, "userinfo_db_userpwd");
+		if (item == NULL) break;
+		cfg->userinfo_db_userpwd = _strdup(item->valuestring);
+
+		// 成绩计算相关信息
 		item = cJSON_GetObjectItem(json, "credit_proportion");
 		if (item == NULL) break;
 		cfg->credit_proportion = atof(item->valuestring);

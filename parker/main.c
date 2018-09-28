@@ -17,6 +17,7 @@
 #include "userquery.h"
 
 mysqlquery_t sqlobj_venue_db = NULL;
+mysqlquery_t sqlobj_userinfo_db = NULL;
 config_st    g_conf;
 log_t        g_log;
 
@@ -24,6 +25,16 @@ typedef struct _tick_st{
 	TIMEVAL tv;
 	struct event* timer;
 }tick_st,*tick_t;
+
+
+// 为mysql_querycallback第三个参数设计
+//typedef struct _db_info{
+//	char *	db_ip;
+//	int		db_port;
+//	char *	db_username;
+//	char *	db_userpwd;
+//	char *  db_name;
+//}db_info, *db_info_t;
 
 int  start_httpd(const char* ip, int port, void (*cb)(struct evhttp_request *, void *), void *arg);
 void httpd_callback(struct evhttp_request* req, void* arg);
@@ -54,7 +65,9 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	init_winsocklib();
 	
-	sqlobj_venue_db = mysqldb_connect_init(g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name,mysql_querycallback);    	
+	sqlobj_venue_db = mysqldb_connect_init(g_conf.venue_db_ip, g_conf.venue_db_port, g_conf.venue_db_username, g_conf.venue_db_userpwd, g_conf.venue_db_name, mysql_querycallback);    	
+	sqlobj_userinfo_db = mysqldb_connect_init(g_conf.userinfo_db_ip, g_conf.userinfo_db_port, g_conf.userinfo_db_username, g_conf.userinfo_db_userpwd, g_conf.userinfo_db_name, mysql_querycallback);
+	
 	router_setup();
 	//启动服务在地址 127.0.0.1:9000 上
 	start_httpd("0.0.0.0",g_conf.svrport , httpd_callback, NULL);
@@ -129,13 +142,13 @@ void mysql_querycallback(void* conn,int code)
 	if(code == eSqlQueryerr_errorquery||code == eSqlQueryerr_errorping){		
 		mysqlquery_t conn = NULL;
 
-		mysqldb_close(sqlobj_venue_db);
-		conn = mysqldb_connect_reinit(&sqlobj_venue_db,g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name);
+		/*mysqldb_close(sqlobj_venue_db);
+		conn = mysqldb_connect_reinit(&sqlobj_venue_db,g_conf.venue_db_ip,g_conf.venue_db_port,g_conf.venue_db_username,g_conf.venue_db_userpwd,g_conf.venue_db_name);
 
 		if(!mysqldb_isclosed(sqlobj_venue_db))
 			log_write(g_log, LOG_NOTICE, "connected db ok\n");
 		else
-			log_write(g_log, LOG_NOTICE, "connected db failed\n");
+			log_write(g_log, LOG_NOTICE, "connected db failed\n");*/
 		
 	}else if(code == eSqlConnectOk)
 	{
@@ -160,17 +173,36 @@ void ontimer(evutil_socket_t listener,short event,void* arg)
 				char timestr[64];
 				strftime(timestr,sizeof(timestr),"%Y-%m-%d %H:%M:%S",localtime(&now));
 
-				sqlobj_venue_db = mysqldb_connect_init(g_conf.db_ip,g_conf.db_port,g_conf.db_username,g_conf.db_userpwd,g_conf.db_name,mysql_querycallback);
+				sqlobj_venue_db = mysqldb_connect_init(g_conf.venue_db_ip,g_conf.venue_db_port,g_conf.venue_db_username,g_conf.venue_db_userpwd,g_conf.venue_db_name,mysql_querycallback);
 
 				if(sqlobj_venue_db)
-					log_write(g_log, LOG_NOTICE, "connect db ok.\n");
+					log_write(g_log, LOG_NOTICE, "DataBase [%s] connected ok.\n", g_conf.venue_db_name);
 				else
-					log_write(g_log, LOG_NOTICE, "connect db failed.\n");
+					log_write(g_log, LOG_NOTICE, "DataBase [%s] connected failed.\n", g_conf.venue_db_name);
 				
 			}else{
 				int pingcode;
 				pingcode = mysqldb_ping(sqlobj_venue_db);				
-				log_write(g_log, LOG_NOTICE, "ping code %d[%s]\n",pingcode,pingcode==0?"success":"failed");
+				log_write(g_log, LOG_NOTICE, "DataBase [%s] ping code %d[%s]\n", g_conf.venue_db_name,pingcode, pingcode == 0 ? "success" : "failed");
+			}
+
+			// 针对userinfo_db，进行同样的操作
+			if (sqlobj_userinfo_db == NULL){
+				char timestr[64];
+				strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+				sqlobj_userinfo_db = mysqldb_connect_init(g_conf.userinfo_db_ip, g_conf.userinfo_db_port, g_conf.userinfo_db_username, g_conf.userinfo_db_userpwd, g_conf.userinfo_db_name, mysql_querycallback);
+
+				if (sqlobj_venue_db)
+					log_write(g_log, LOG_NOTICE, "DataBase [%s] connected ok.\n", g_conf.userinfo_db_name);
+				else
+					log_write(g_log, LOG_NOTICE, "DataBase [%s] connected failed.\n", g_conf.userinfo_db_name);
+
+			}
+			else{
+				int pingcode;
+				pingcode = mysqldb_ping(sqlobj_userinfo_db);
+				log_write(g_log, LOG_NOTICE, "DataBase [%s] ping code %d[%s]\n", g_conf.userinfo_db_name, pingcode, pingcode == 0 ? "success" : "failed");
 			}
 		}
 	}
