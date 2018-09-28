@@ -207,7 +207,7 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	_assure_clearbuff(g_membuffer,4096);
 
-	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
+	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remainsobj\":%s}",
 		finalscore.name,
 		cardid,
 		comid,
@@ -297,7 +297,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	_assure_clearbuff(g_membuffer, 4096);
 	
-	/*membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
+	/*membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remainsobj\":%s}",
 		scores.name,
 		cardid,
 		comid,
