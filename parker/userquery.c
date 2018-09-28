@@ -310,7 +310,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		finalscore.suggestion,
 		finalscore.rmnscenes
 		);*/
-	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"backcard\",\"rslt\":\"ok\",\"cardid\":\"%s\",\"comid\":\"%s\"}",
+	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"backcard\",\"rslt\":\"ok\",\"cardid\":\"%s\",\"comid\":\"%s\",\"error\":\"\"}",
 		finalscore.name,
 		cardid,
 		comid
