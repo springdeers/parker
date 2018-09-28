@@ -15,7 +15,6 @@ typedef struct _score_st{
 #define _maxscore_num (128)
 
 typedef struct _scores_st{
-	char name[30];					// 体验者姓名
 	int totalcredit;				// 所有场景总学分
 	int totalscenes;				// 所有场景总数
 	int scorenum;					// 体验过后所得成绩的数量
@@ -25,6 +24,7 @@ typedef struct _scores_st{
 }scores_st,*scores_t;
 
 typedef struct _finalscore_st{
+	char	name[30];			// 游客姓名
 	float	finalscore;			// 最终百分制的分数
 	float	credit_point;		// 学分点
 	float	grade_point;		// 绩点

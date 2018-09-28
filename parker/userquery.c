@@ -19,6 +19,7 @@
 #include "dbaccess.h"
 
 extern mysqlquery_t sqlobj_venue_db;
+extern mysqlquery_t sqlobj_userinfo_db;
 static membuff_t g_membuffer = NULL;
 
 #define NULL 0
@@ -166,14 +167,6 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
 	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
 
-	/*if (GetTickCount() - score_scs_update_time > 60000){
-		scores_scs_free(&scores_scs);
-		db_load_scores_scs(sqlobj_venue_db, &scores_scs);
-		score_scs_update_time = GetTickCount();
-		printf("refresh db_load_scores_scs..(%d)\n", score_scs_update_time);
-	}*/
-
-
 	// 获取所有场景个数与学分总和
 	if (-1 == db_query_credits(sqlobj_venue_db, &scores.totalscenes, &scores.totalcredit))
 	{
@@ -181,7 +174,6 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		printf("db_query_credits failed.\n");
 		return -1;
 	}
-
 
 	if (scores.totalcredit == 0)
 	{
@@ -198,17 +190,25 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		printf("db_query_credits failed.\n");
 		return -1;
 	}
+
+	// 获取游客姓名
+	char* name = NULL;
+	if (-1 == db_query_travelrname(sqlobj_userinfo_db, atoi(cardid), &name))
+	{
+		evbuffer_free(buf);
+		printf("db_query_travelrname failed.\n");
+		return -1;
+	}
 		
-	printf("scores->remains: %s\n",scores.remains);
 	// 最重要的改动，最新成绩算法
 	finalscore_st finalscore = {0};
+	memcpy(finalscore.name, name, strlen(name) + 1);
 	get_finalscore(&scores, &finalscore);
 
 	_assure_clearbuff(g_membuffer,4096);
 
-	memcpy(scores.name, "李明", strlen("李明") + 1);	// 后期数据库会整合，获取name不再需要跨数据库。此处为测试暂时写成定值
 	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
-		scores.name,
+		finalscore.name,
 		cardid,
 		comid,
 		finalscore.finalscore,
@@ -222,10 +222,12 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	membuff_addchar(g_membuffer, '\0');
 
 	evbuffer_add_printf(buf, membuff_data(g_membuffer));
-
+	printf("reply to client:\n %s\n", g_membuffer->data);
 	//回复给客户端
 	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gbk");
 	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+
+	
 
 	evbuffer_free(buf);
 
@@ -280,14 +282,21 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		return -1;
 	}
 
-	printf("scores->remains: %s\n", scores.remains);
+	char* name = NULL;
+	if (-1 == db_query_travelrname(sqlobj_userinfo_db, atoi(cardid), &name))
+	{
+		evbuffer_free(buf);
+		printf("db_query_travelrname failed.\n");
+		return -1;
+	}
+
 	// 最重要的改动，最新成绩算法
 	finalscore_st finalscore = { 0 };
+	memcpy(finalscore.name, name, strlen(name) + 1);
 	get_finalscore(&scores, &finalscore);
 
 	_assure_clearbuff(g_membuffer, 4096);
-
-	memcpy(scores.name, "李明", strlen("李明") +1);	// 后期数据库会整合，获取name不再需要跨数据库。此处为测试暂时写成定值
+	
 	/*membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
 		scores.name,
 		cardid,
@@ -300,7 +309,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		finalscore.rmnscenes
 		);*/
 	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"backcard\",\"rslt\":\"ok\",\"cardid\":\"%s\",\"comid\":\"%s\"}",
-		scores.name,
+		finalscore.name,
 		cardid,
 		comid
 		);
@@ -308,7 +317,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	membuff_addchar(g_membuffer, '\0');
 
 	evbuffer_add_printf(buf, membuff_data(g_membuffer));
-
+	printf("reply to client:\n %s\n", g_membuffer->data);
 	//回复给客户端
 	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gbk");
 	evhttp_send_reply(req, HTTP_OK, "OK", buf);

@@ -38,6 +38,42 @@ int db_query_credits(mysqlquery_t dbinst, int* cnt, int *credits)
 }
 
 
+// 从user_info_db中获取游客姓名即nickname
+int db_query_travelrname(mysqlquery_t dbinst, int cardid, int **name)
+{
+	char sql[512] = { 0 };
+	int  rt = -1;
+
+	if (dbinst == NULL)
+		return rt;
+
+	sprintf(sql, "SELECT nickame FROM tbtraveler WHERE userid=%d",cardid);
+	int query = mysql_real_query(dbinst->m_con, sql, strlen(sql));
+
+	if (query == 0)
+	{
+		dbinst->m_res = mysql_store_result(dbinst->m_con);
+		while (dbinst->m_row = mysql_fetch_row(dbinst->m_res))
+		{
+			if (dbinst->m_row[0])
+			{
+				*name = _strdup(dbinst->m_row[0]);
+				rt = 0;
+			}	
+		}
+		mysql_free_result(dbinst->m_res);
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_query_travelrname . query error :%s", mysql_error(dbinst->m_con));
+	}
+
+	return rt;
+}
+
+
 int db_query_remains(mysqlquery_t dbinst, scores_t scores)
 {
 	char sql[512] = { 0 };
