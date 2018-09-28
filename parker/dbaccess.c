@@ -12,7 +12,7 @@ int db_query_credits(mysqlquery_t dbinst, int* cnt, int *credits)
 	if (dbinst == NULL)
 		return rt;
 
-	sprintf_s(sql, sizof(sql) - 1, "SELECT COUNT(*),SUM(credit) FROM tbScene");
+	sprintf_s(sql, sizeof(sql) - 1, "SELECT COUNT(*),SUM(credit) FROM tbScene");
 	rt = mysql_real_query(dbinst->m_con, sql, strlen(sql));
 
 	if (rt == 0)
