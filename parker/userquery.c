@@ -18,7 +18,8 @@
 #include "mysqldb.h"
 #include "dbaccess.h"
 
-extern mysqlquery_t mysqlconn;
+extern mysqlquery_t sqlobj_venue_db;
+extern mysqlquery_t sqlobj_userinfo_db;
 static membuff_t g_membuffer = NULL;
 
 #define NULL 0
@@ -127,8 +128,8 @@ int user_analyscene(struct evkeyvalq*kvq, struct evhttp_request* req, void* para
 	scoredeploy.sceneid = 0;
 	scoredeploy.buffer[0] = '\0';
 
-	db_load_statistic_scene_scores(mysqlconn, atoi(sceneid), &scoredeploy);
-	db_load_statistic_scene_visitors(mysqlconn, atoi(sceneid), &agedeploy);
+	db_load_statistic_scene_scores(sqlobj_venue_db, atoi(sceneid), &scoredeploy);
+	db_load_statistic_scene_visitors(sqlobj_venue_db, atoi(sceneid), &agedeploy);
 
 	_assure_clearbuff(g_membuffer, 4096);
 
@@ -163,25 +164,16 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	if (cardid == NULL || req == NULL || strlen(cardid) == 0) { evbuffer_free(buf); return eRoute_failed; }
 
-	db_load_scores(mysqlconn, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
+	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
 	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
 
-	/*if (GetTickCount() - score_scs_update_time > 60000){
-		scores_scs_free(&scores_scs);
-		db_load_scores_scs(mysqlconn, &scores_scs);
-		score_scs_update_time = GetTickCount();
-		printf("refresh db_load_scores_scs..(%d)\n", score_scs_update_time);
-	}*/
-
-
 	// 获取所有场景个数与学分总和
-	if (-1 == db_query_credits(mysqlconn, &scores.totalscenes, &scores.totalcredit))
+	if (-1 == db_query_credits(sqlobj_venue_db, &scores.totalscenes, &scores.totalcredit))
 	{
 		evbuffer_free(buf);
 		printf("db_query_credits failed.\n");
 		return -1;
 	}
-
 
 	if (scores.totalcredit == 0)
 	{
@@ -192,23 +184,31 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	// 获取未体验场景，构造出json串
 	// json串格式： {"remains":[{"name":"烟雾逃生"},{"name":"汽车落水"},{"name":"地震小屋"}]}
-	if (-1 == db_query_remains(mysqlconn, &scores))
+	if (-1 == db_query_remains(sqlobj_venue_db, &scores))
 	{
 		evbuffer_free(buf);
 		printf("db_query_credits failed.\n");
 		return -1;
 	}
+
+	// 获取游客姓名
+	char* name = NULL;
+	if (-1 == db_query_travelrname(sqlobj_userinfo_db, atoi(cardid), &name))
+	{
+		evbuffer_free(buf);
+		printf("db_query_travelrname failed.\n");
+		return -1;
+	}
 		
-	printf("scores->remains: %s\n",scores.remains);
 	// 最重要的改动，最新成绩算法
 	finalscore_st finalscore = {0};
+	memcpy(finalscore.name, name, strlen(name) + 1);
 	get_finalscore(&scores, &finalscore);
 
 	_assure_clearbuff(g_membuffer,4096);
 
-	memcpy(scores.name, "李明", strlen("李明") + 1);	// 后期数据库会整合，获取name不再需要跨数据库。此处为测试暂时写成定值
 	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
-		scores.name,
+		finalscore.name,
 		cardid,
 		comid,
 		finalscore.finalscore,
@@ -222,10 +222,12 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	membuff_addchar(g_membuffer, '\0');
 
 	evbuffer_add_printf(buf, membuff_data(g_membuffer));
-
+	printf("reply to client:\n %s\n", g_membuffer->data);
 	//回复给客户端
 	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gbk");
 	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+
+	
 
 	evbuffer_free(buf);
 
@@ -234,7 +236,7 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	/*if (queryonly && strcmp(queryonly, "true") == 0)
 		return eRoute_success;
 
-	db_clear_scores(mysqlconn, atoi(cardid));
+	db_clear_scores(sqlobj_venue_db, atoi(cardid));
 */
 	return eRoute_success;
 }
@@ -253,11 +255,11 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	if (cardid == NULL || req == NULL || strlen(cardid) == 0) { evbuffer_free(buf); return eRoute_failed; }
 
-	db_load_scores(mysqlconn, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
+	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
 	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
 
 	// 获取所有场景个数与学分总和
-	if (-1 == db_query_credits(mysqlconn, &scores.totalscenes, &scores.totalcredit))
+	if (-1 == db_query_credits(sqlobj_venue_db, &scores.totalscenes, &scores.totalcredit))
 	{
 		evbuffer_free(buf);
 		printf("db_query_credits failed.\n");
@@ -273,21 +275,28 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	// 获取未体验场景，构造出json串
 	// json串格式： {"remains":[{"name":"烟雾逃生"},{"name":"汽车落水"},{"name":"地震小屋"}]}
-	if (-1 == db_query_remains(mysqlconn, &scores))
+	if (-1 == db_query_remains(sqlobj_venue_db, &scores))
 	{
 		evbuffer_free(buf);
 		printf("db_query_credits failed.\n");
 		return -1;
 	}
 
-	printf("scores->remains: %s\n", scores.remains);
+	char* name = NULL;
+	if (-1 == db_query_travelrname(sqlobj_userinfo_db, atoi(cardid), &name))
+	{
+		evbuffer_free(buf);
+		printf("db_query_travelrname failed.\n");
+		return -1;
+	}
+
 	// 最重要的改动，最新成绩算法
 	finalscore_st finalscore = { 0 };
+	memcpy(finalscore.name, name, strlen(name) + 1);
 	get_finalscore(&scores, &finalscore);
 
 	_assure_clearbuff(g_membuffer, 4096);
-
-	memcpy(scores.name, "李明", strlen("李明") +1);	// 后期数据库会整合，获取name不再需要跨数据库。此处为测试暂时写成定值
+	
 	/*membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remains\":%s}",
 		scores.name,
 		cardid,
@@ -300,7 +309,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		finalscore.rmnscenes
 		);*/
 	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"backcard\",\"rslt\":\"ok\",\"cardid\":\"%s\",\"comid\":\"%s\"}",
-		scores.name,
+		finalscore.name,
 		cardid,
 		comid
 		);
@@ -308,7 +317,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	membuff_addchar(g_membuffer, '\0');
 
 	evbuffer_add_printf(buf, membuff_data(g_membuffer));
-
+	printf("reply to client:\n %s\n", g_membuffer->data);
 	//回复给客户端
 	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gbk");
 	evhttp_send_reply(req, HTTP_OK, "OK", buf);
@@ -320,7 +329,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	/*if (queryonly && strcmp(queryonly, "true") == 0)
 	return eRoute_success;
 
-	db_clear_scores(mysqlconn, atoi(cardid));
+	db_clear_scores(sqlobj_venue_db, atoi(cardid));
 	*/
 	return eRoute_success;
 }
@@ -363,7 +372,7 @@ int user_scenestatus(struct evkeyvalq*kvq, struct evhttp_request* req, void* par
 
 	if (sceneid == NULL || req == NULL || strlen(sceneid) == 0){ evbuffer_free(buf); return eRoute_failed; }
 
-	db_load_scenestatus(mysqlconn, atoi(sceneid), mcuid == NULL ? 0 : atoi(mcuid), starttime, endtime, statuses);
+	db_load_scenestatus(sqlobj_venue_db, atoi(sceneid), mcuid == NULL ? 0 : atoi(mcuid), starttime, endtime, statuses);
 	
 	_assure_clearbuff(g_membuffer,4096);
 
@@ -412,7 +421,7 @@ static int user_useract(struct evkeyvalq*kvq, struct evhttp_request* req, void* 
 
 	if (cardid == NULL || req == NULL || strlen(cardid) == 0){ evbuffer_free(buf); return eRoute_failed; }
 
-	num = db_load_visitor_activity(mysqlconn, atoi(cardid), rslts, sizeof(rslts) / sizeof(rslts[0]));
+	num = db_load_visitor_activity(sqlobj_venue_db, atoi(cardid), rslts, sizeof(rslts) / sizeof(rslts[0]));
 
 	if (g_membuffer == NULL) g_membuffer = membuff_new(512);
 	membuff_clear(g_membuffer);
@@ -437,7 +446,7 @@ static int user_useract(struct evkeyvalq*kvq, struct evhttp_request* req, void* 
 	if (queryonly && strcmp(queryonly, "true") == 0)
 		return eRoute_success;
 
-	db_clear_visitor_activtiy(mysqlconn, atoi(cardid));
+	db_clear_visitor_activtiy(sqlobj_venue_db, atoi(cardid));
 
 	return eRoute_success;
 }
@@ -453,7 +462,7 @@ int user_scenes(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	if (sceneid == NULL || req == NULL || strlen(sceneid) == 0) { evbuffer_free(buf); return eRoute_failed; }
 
-	db_load_scenes(mysqlconn, atoi(sceneid), rslts);
+	db_load_scenes(sqlobj_venue_db, atoi(sceneid), rslts);
 
 	_assure_clearbuff(g_membuffer,4096);
 

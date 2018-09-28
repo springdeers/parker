@@ -19,7 +19,7 @@
 #include "dbaccess.h"
 
 extern config_st    g_conf;
-extern mysqlquery_t mysqlconn;
+extern mysqlquery_t sqlobj_venue_db;
 static membuff_t    g_membuffer = NULL;
 
 #define NULL 0
@@ -112,13 +112,13 @@ int card_insert(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	while ((buf = evbuffer_new()) == NULL) Sleep(1);
 	if (cardid == NULL || req == NULL || strlen(cardid) == 0){evbuffer_free(buf); return eRoute_failed;}
 
-	//db_load_scores(mysqlconn, atoi(cardid), &scores);
-	//db_card_insert(mysqlconn, atoi(cardid), cardsn);
+	//db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);
+	//db_card_insert(sqlobj_venue_db, atoi(cardid), cardsn);
 	//scores_shrink(&scores);
 
 	if (GetTickCount() - score_scs_update_time > g_conf.score_scs_refresh){
 		scores_scs_free(&scores_scs);
-		db_load_scores_scs(mysqlconn, &scores_scs);
+		db_load_scores_scs(sqlobj_venue_db, &scores_scs);
 		score_scs_update_time = GetTickCount();
 		printf("refresh db_load_scores_scs..(%d)\n", score_scs_update_time);
 	}
@@ -151,7 +151,7 @@ int card_insert(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	/*if (queryonly && strcmp(queryonly, "true") == 0)
 		return eRoute_success;*/
 
-	db_clear_scores(mysqlconn, atoi(cardid));
+	db_clear_scores(sqlobj_venue_db, atoi(cardid));
 
 	return eRoute_success;
 }

@@ -11,7 +11,7 @@
 #include "membuff.h"
 #include "mysqldb.h"
 
-extern mysqlquery_t mysqlconn;
+extern mysqlquery_t sqlobj_venue_db;
 static membuff_t g_membuffer = NULL;
 extern log_t  g_log;
 
