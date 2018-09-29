@@ -11,19 +11,19 @@
 #include "orderquery.h"
 #include "userquery.h"
 
-extern log_t  g_log;
-
-static router_t      g_router;
-
-static char* g_helpstr = NULL;
+extern log_t    g_log;
+static router_t g_router;
+static char*    g_helpstr = NULL;
 
 router_t   router_setup()
 {
-	g_router = (router_t)userquery_new();
-	g_router->router_size = 1;
-	router_add(g_router, (router_t)orderquery_new());
-	//router_add(g_router, cardquery_new());
-
+	if (g_router == NULL){
+		g_router = (router_t)userquery_new();
+		g_router->router_size = 1;
+		router_add(g_router, (router_t)orderquery_new());
+		//router_add(g_router, cardquery_new());
+	}
+	
 	return g_router;
 }
 
