@@ -40,7 +40,7 @@ int db_query_credits(mysqlquery_t dbinst, int* cnt, int *credits)
 
 
 // 从user_info_db中获取游客姓名即nickname
-int db_query_travelrname(mysqlquery_t dbinst, int cardid, char **name)
+int db_query_travelername(mysqlquery_t dbinst, int cardid, char **name)
 {
 	char sql[512] = { 0 };
 	int  rt = -1;
@@ -48,7 +48,7 @@ int db_query_travelrname(mysqlquery_t dbinst, int cardid, char **name)
 	if (dbinst == NULL)
 		return rt;
 
-	sprintf(sql, sizeof(sql) - 1, "SELECT nickame FROM tbtraveler WHERE userid=%d", cardid);
+	sprintf_s(sql, sizeof(sql) - 1, "SELECT nickame FROM tbtraveler WHERE userid=%d", cardid);
 	int query = mysql_real_query(dbinst->m_con, sql, strlen(sql));
 
 	if (query == 0)
