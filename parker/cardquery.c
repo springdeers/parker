@@ -154,7 +154,7 @@ int card_mod(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	else if (strcmp("sn2id", direction) == 0)
 		mod = db_mod_card_bysn(sqlobj_venue_db, cardid, cardsn);
 	else{
-		return http_response_ok(kvq, req, param, "参数错误.");
+		return http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	if (mod)
