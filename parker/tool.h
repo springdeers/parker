@@ -133,5 +133,19 @@ void    vec_clear(vec_t);
 void    vec_free(vec_t);
 void*   vec_data(vec_t, int);
 
+#define _free1(_pvoid1){\
+free(_pvoid1); _pvoid1 = NULL;\
+}
+
+#define _free2(_pvoid1,_pvoid2){\
+free(_pvoid1); _pvoid1 = NULL;\
+free(_pvoid2); _pvoid2 = NULL;\
+}
+
+#define _free3(_pvoid1,_pvoid2,_pvoid3){\
+free(_pvoid1); _pvoid1 = NULL;\
+free(_pvoid2); _pvoid2 = NULL;\
+free(_pvoid3); _pvoid3 = NULL;\
+}
 
 #endif

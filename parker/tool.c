@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <time.h>
 #include "tool.h"
+#include "stdio.h"
 
 io_throughout_check_t io_throughout_check_new(int timeouts)
 {
