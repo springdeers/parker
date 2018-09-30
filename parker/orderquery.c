@@ -86,6 +86,7 @@ int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	evbuffer_add_printf(buf, g_membuffer->data);
 	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
 	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+
 	evbuffer_free(buf);
 
 	return eRoute_success;
@@ -171,8 +172,6 @@ static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 
 	int query = db_query_unsettled_orders(sqlobj_venue_db, where, &orders, &count);
 
-	while ((buf = evbuffer_new()) == NULL) Sleep(1);
-
 	_assure_clearbuff(g_membuffer, 64 * 1024);
 
 	if (query){
@@ -199,6 +198,7 @@ static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
+	while ((buf = evbuffer_new()) == NULL) Sleep(1);
 	evbuffer_add_printf(buf, g_membuffer->data);
 
 	//回复给客户端
@@ -259,8 +259,6 @@ static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 
 	saved = db_save_unsettled_orders(sqlobj_venue_db, orders, ordernum);
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-
 	_assure_clearbuff(g_membuffer, 64 * 1024);
 
 	if (saved)
@@ -268,6 +266,7 @@ static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 	else
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 
+	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
 	evbuffer_add_printf(respbuf, g_membuffer->data);
 
 	//回复给客户端
@@ -299,14 +298,13 @@ static int del_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 	deleted = db_delete_unsettled_orders(sqlobj_venue_db, orderno, username);
 	_assure_clearbuff(g_membuffer, 64*1024);
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-
 	if (deleted)
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"success\"}");
 	else{
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
+	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
 	evbuffer_add_printf(respbuf, g_membuffer->data);
 
 	//回复给客户端
@@ -367,14 +365,13 @@ static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 	modified = db_modify_unsettled_orders(sqlobj_venue_db, where, set);
 	_assure_clearbuff(g_membuffer, 64 * 1024);
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-
 	if (modified)
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"success\"}");
 	else{
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
+	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
 	evbuffer_add_printf(respbuf, g_membuffer->data);
 
 	//回复给客户端
