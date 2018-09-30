@@ -27,8 +27,6 @@ static membuff_t    g_membuffer = NULL;
 
 static char*  g_helpstr = NULL;
 extern log_t  g_log;
-extern DWORD         score_scs_update_time;
-extern scores_scs_st scores_scs;
 
 static int card_add(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 static int card_del(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
@@ -93,6 +91,7 @@ void   cardquery_free(cardquery_t query)
 {
 	if (query) free(query);
 }
+
 //////////////////////////////////////////////////////////////////////////
 //get method.
 int card_add(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
@@ -206,9 +205,6 @@ int card_get(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 int card_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	struct evbuffer* buf = NULL;
-	while ((buf = evbuffer_new()) == NULL) Sleep(1);
-
 	if (g_helpstr == NULL){
 		FILE* file = fopen("./wapihelp.txt", "rb");
 		if (file){
@@ -227,7 +223,7 @@ int card_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 			g_helpstr = "help file not exist.";
 	}
 
-	if (req == NULL) { evbuffer_free(buf); return eRoute_failed; }
+	if (req == NULL) { return http_response_error(kvq, req, param, "²éÑ¯´íÎó."); }
 
 	_assure_clearbuff(g_membuffer,4096);
 
@@ -235,11 +231,7 @@ int card_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	membuff_add_printf(g_membuffer, "\"%s\"", g_helpstr);
 	membuff_addstr(g_membuffer, "}",sizeof("}"));
 
-	evbuffer_add_printf(buf, g_membuffer->data);
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
-
-	evbuffer_free(buf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	return eRoute_success;
 }
