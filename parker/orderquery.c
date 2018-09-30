@@ -54,8 +54,6 @@ static route_entry_st route_map[] = {
 
 int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	struct evbuffer* buf = evbuffer_new();
-
 	if (g_helpstr == NULL){
 		FILE* file = fopen("./wapihelp.txt", "rb");
 		if (file){
@@ -74,21 +72,16 @@ int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 			g_helpstr = "help file not exist.";
 	}
 
-	if (!buf || req == NULL) return eRoute_failed;
+	if (req == NULL) return http_response_wrong(kvq, req, param,"请求错误.");
 
-	if (g_membuffer == NULL) g_membuffer = membuff_new(4096);
-	membuff_clear(g_membuffer);
+	_assure_clearbuff(g_membuffer, 4096);
 
 	membuff_add_printf(g_membuffer, "{\"type\":\"help\",\"code\":\"-1\",\"rslt\":");
 	membuff_add_printf(g_membuffer, "\"%s\"", g_helpstr);
 	membuff_addchar(g_membuffer, '}');
 	membuff_addchar(g_membuffer, '\0');
 
-	evbuffer_add_printf(buf, g_membuffer->data);
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
-
-	evbuffer_free(buf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	return eRoute_success;
 }
@@ -113,48 +106,38 @@ void   orderquery_free(orderquery_t query)
 
 static int _jparse_unsettledorder(cJSON* jorder, unsettled_order_t order)
 {
-	if (jorder == NULL || order == NULL) return 0;
-
 	cJSON * obj = NULL;
 
-	obj = cJSON_GetObjectItem(jorder, _field_orderdate);
-	if (obj)
+	if (jorder == NULL || order == NULL) return 0;
+
+	if (obj = cJSON_GetObjectItem(jorder, _field_orderdate))
 		strcpy_s(order->orderdate, sizeof(order->orderdate) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_username);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_username))
 		strcpy_s(order->username, sizeof(order->username) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_age);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_age))
 		order->age = s_atoi(obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_cardid);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_cardid))
 		strcpy_s(order->cardid, sizeof(order->cardid) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_telephone);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_telephone))
 		strcpy_s(order->telephone, sizeof(order->telephone) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_workunit);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_workunit))
 		strcpy_s(order->workunit, sizeof(order->workunit) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_email);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_email))
 		strcpy_s(order->email, sizeof(order->email) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_team);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_team))
 		strcpy_s(order->team, sizeof(order->team) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_group);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_group))
 		strcpy_s(order->group, sizeof(order->group) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_teamleader);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_teamleader))
 		strcpy_s(order->teamleader, sizeof(order->teamleader) - 1, obj->valuestring);
 
 	return 1;
@@ -162,56 +145,44 @@ static int _jparse_unsettledorder(cJSON* jorder, unsettled_order_t order)
 
 static int _jparse_settledorder(cJSON* jorder, settled_order_t order)
 {
-	if (jorder == NULL || order == NULL) return 0;
-
 	cJSON * obj = NULL;
 
-	obj = cJSON_GetObjectItem(jorder, _field_orderdate);
-	if (obj)
+	if (jorder == NULL || order == NULL) return 0;
+
+	if (obj = cJSON_GetObjectItem(jorder, _field_orderdate))
 		strcpy_s(order->orderdate, sizeof(order->orderdate) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_username);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_username))
 		strcpy_s(order->username, sizeof(order->username) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_age);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_age))
 		order->age = s_atoi(obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_cardid);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_cardid))
 		strcpy_s(order->cardid, sizeof(order->cardid) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_telephone);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_telephone))
 		strcpy_s(order->telephone, sizeof(order->telephone) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_workunit);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_workunit))
 		strcpy_s(order->workunit, sizeof(order->workunit) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_email);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_email))
 		strcpy_s(order->email, sizeof(order->email) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_team);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_team))
 		strcpy_s(order->team, sizeof(order->team) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_group);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_group))
 		strcpy_s(order->group, sizeof(order->group) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_teamleader);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_teamleader))
 		strcpy_s(order->teamleader, sizeof(order->teamleader) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_operator);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_operator))
 		strcpy_s(order->operator, sizeof(order->operator) - 1, obj->valuestring);
 
-	obj = cJSON_GetObjectItem(jorder, _field_opertime);
-	if (obj)
+	if (obj = cJSON_GetObjectItem(jorder, _field_opertime))
 		strcpy_s(order->opertime, sizeof(order->opertime) - 1, obj->valuestring);
 
 	return 1;
@@ -219,8 +190,7 @@ static int _jparse_settledorder(cJSON* jorder, settled_order_t order)
 
 static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	int num = 0;
-	struct evbuffer* buf = NULL;
+	int  num = 0;
 	char where[256] = {0};
 	int  printn = 0;
 	unsettled_order_t * orders = NULL;
@@ -251,20 +221,15 @@ static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 		}
 		membuff_trim(g_membuffer,",");
 		membuff_addchar(g_membuffer, ']');
+		membuff_addchar(g_membuffer, '\0');
 	}
 	else{
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
-	while ((buf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(buf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	//clear job..
-	evbuffer_free(buf);
 	free(orders);
 
 	return eRoute_success;
@@ -273,29 +238,20 @@ static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int    saved    = 0;
-	char  *reqbody  = NULL;
 	cJSON *jroot = NULL;
 	int    ordernum = 0;
 	int    evbuflen = 0;
 	unsettled_order_t orders  = NULL;
-	struct evbuffer * reqbuf  = NULL;
-	struct evbuffer * respbuf = NULL;
+	char  *reqbody = http_request_body(req);
 
-	if ((reqbuf = req->input_buffer) == NULL || (evbuflen = evbuffer_get_length(reqbuf)) == 0) 
-		return http_response_wrong(kvq, req, param, "参数错误.");
-	
-	while ((reqbody = calloc(1, evbuflen + 1)) == NULL) Sleep(1);
-
-	evbuffer_remove(reqbuf, reqbody, evbuflen);
-
-	if ((jroot = cJSON_Parse((const char*)reqbody)) == NULL){
-		free(reqbody);
+	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL){
+		if (reqbody) free(reqbody);
 		return  http_response_wrong(kvq, req, param, "参数错误.");
 	}
 
 	if ((ordernum = cJSON_GetArraySize(jroot)) == 0)
 	{
-		free(reqbody);
+		if (reqbody) free(reqbody);
 		return  http_response_wrong(kvq, req, param, "参数错误.");
 	}
 
@@ -324,16 +280,10 @@ static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 	else
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(respbuf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	//clear jobs..
 	cJSON_Delete(jroot);
-	evbuffer_free(respbuf);
 	free(orders);
 	free(reqbody);
 
@@ -345,8 +295,6 @@ static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 static int del_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int deleted = 0;
-	struct evbuffer* respbuf = NULL;
-
 	const char* orderno  = evhttp_find_header(kvq, _field_orderno);
 	const char* username = evhttp_find_header(kvq, _field_username);
 
@@ -362,15 +310,7 @@ static int del_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(respbuf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
-
-	//clear jobs..
-	evbuffer_free(respbuf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 	
 	printf("%s", "del_unsettled_order");
 	return eRoute_success;
@@ -379,23 +319,15 @@ static int del_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int    modified = 0;
-	struct evbuffer* respbuf = NULL;
-	struct evbuffer* reqbuf  = NULL;
 	int    evbuflen = 0;
-	char*  reqbody  = NULL;
 	cJSON* jroot    = NULL;
 	char   where[256] = {0};
 	char   set[256]   = {0};
 	int    formed = 0;
+	char*  reqbody = http_request_body(req);
 
-	if ((reqbuf = req->input_buffer) == NULL || (evbuflen = evbuffer_get_length(reqbuf)) == 0) return  http_response_wrong(kvq, req, param, "参数错误.");;
-
-	while ((reqbody = calloc(1, evbuflen + 1)) == NULL) Sleep(1);
-
-	evbuffer_remove(reqbuf, reqbody, evbuflen);
-
-	if ((jroot = cJSON_Parse((const char*)reqbody)) == NULL) {
-		free(reqbody); 
+	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL) {
+		if (reqbody) free(reqbody);
 		return  http_response_wrong(kvq, req, param, "参数错误.");
 	}
 
@@ -407,14 +339,9 @@ static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 		return http_response_wrong(kvq, req, param, "参数错误.");;
 	}
 	
-	formed = sqlpartstr_fromjson(jwhere, g_fields_unsettled, _arraysize(g_fields_unsettled), "where", where, sizeof(where));
-	if (!formed){ 
-		free(reqbody); cJSON_Delete(jroot); 
-		return http_response_wrong(kvq, req, param, "参数错误.");;
-	}
-
-	formed = sqlpartstr_fromjson(jwhere, g_fields_unsettled, _arraysize(g_fields_unsettled), "set", set, sizeof(set));
-	if (!formed){
+	if (!sqlpartstr_fromjson(jwhere, g_fields_unsettled, _arraysize(g_fields_unsettled), "where", where, sizeof(where))||
+		!sqlpartstr_fromjson(jwhere, g_fields_unsettled, _arraysize(g_fields_unsettled), "set", set, sizeof(set)))
+	{ 
 		free(reqbody); cJSON_Delete(jroot); 
 		return http_response_wrong(kvq, req, param, "参数错误.");;
 	}
@@ -429,15 +356,9 @@ static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(respbuf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	//clear jobs..
-	evbuffer_free(respbuf);
 	cJSON_Delete(jroot);
 	free(reqbody);
 
@@ -452,7 +373,6 @@ static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 static int get_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int num = 0;
-	struct evbuffer* buf = NULL;
 	char where[256] = { 0 };
 	int  printn = 0;
 	settled_order_t * orders = NULL;
@@ -468,38 +388,33 @@ static int get_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"ok\",\"data\":[");
 		for (int i = 0; i < count; i++){
 			membuff_add_printf(g_membuffer, "{\"orderdate\":\"%s\",\"orderno\":\"%s\",\"username\":\"%s\",\"age\":\"%d\",\"cardid\":\"%s\",\"telephone\":\"%s\",\"workunit\":\"%s\",\
-																						\"email\":\"%s\",\"team\":\"%s\",\"group\":\"%s\",\"teamleader\":\"%s\",\
-																						,\"operator\":\"%s\",\"opertime\":\"%s\"},",
-																						orders[i]->orderdate,
-																						orders[i]->orderno,
-																						orders[i]->username,
-																						orders[i]->age,
-																						orders[i]->cardid,
-																						orders[i]->telephone,
-																						orders[i]->workunit,
-																						orders[i]->email,
-																						orders[i]->team,
-																						orders[i]->group,
-																						orders[i]->teamleader,
-																						orders[i]->operator,
-																						orders[i]->opertime);
+											  \"email\":\"%s\",\"team\":\"%s\",\"group\":\"%s\",\"teamleader\":\"%s\",\
+										      \"operator\":\"%s\",\"opertime\":\"%s\"},",
+											  orders[i]->orderdate,
+											  orders[i]->orderno,
+											  orders[i]->username,
+											  orders[i]->age,
+											  orders[i]->cardid,
+											  orders[i]->telephone,
+											  orders[i]->workunit,
+											  orders[i]->email,
+											  orders[i]->team,
+											  orders[i]->group,
+											  orders[i]->teamleader,
+											  orders[i]->operator,
+											  orders[i]->opertime);
 		}
 		membuff_trim(g_membuffer, ",");
 		membuff_addchar(g_membuffer, ']');
+		membuff_addchar(g_membuffer, '\0');
 	}
 	else{
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
-	while ((buf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(buf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	//clear job..
-	evbuffer_free(buf);
 	free(orders);
 
 	printf("%s", "get_settled_order");
@@ -509,23 +424,15 @@ static int get_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 static int add_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int    saved = 0;
-	char  *reqbody = NULL;
 	cJSON *jroot = NULL;
 	int    ordernum = 0;
 	int    evbuflen = 0;
 	settled_order_t orders = NULL;
-	struct evbuffer * reqbuf = NULL;
-	struct evbuffer * respbuf = NULL;
 
-	if ((reqbuf = req->input_buffer) == NULL || (evbuflen = evbuffer_get_length(reqbuf)) == 0)
-		return http_response_wrong(kvq, req, param, "参数错误.");
+	char  *reqbody = http_request_body(req);
 
-	while ((reqbody = calloc(1, evbuflen + 1)) == NULL) Sleep(1);
-
-	evbuffer_remove(reqbuf, reqbody, evbuflen);
-
-	if ((jroot = cJSON_Parse((const char*)reqbody)) == NULL){
-		free(reqbody);
+	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL){
+		if (reqbody) free(reqbody);
 		return  http_response_wrong(kvq, req, param, "参数错误.");
 	}
 
@@ -560,16 +467,10 @@ static int add_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 	else
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(respbuf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	//clear jobs..
 	cJSON_Delete(jroot);
-	evbuffer_free(respbuf);
 	free(orders);
 	free(reqbody);
 
@@ -580,8 +481,6 @@ static int add_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 static int del_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int deleted = 0;
-	struct evbuffer* respbuf = NULL;
-
 	const char* orderno  = evhttp_find_header(kvq, _field_orderno);
 	const char* username = evhttp_find_header(kvq, _field_username);
 
@@ -597,15 +496,7 @@ static int del_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(respbuf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
-
-	//clear jobs..
-	evbuffer_free(respbuf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	printf("%s", "del_settled_order");
 	return eRoute_success;
@@ -614,42 +505,27 @@ static int del_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 static int mod_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
 	int    modified = 0;
-	struct evbuffer* respbuf = NULL;
-	struct evbuffer* reqbuf = NULL;
-	int    evbuflen = 0;
-	char*  reqbody = NULL;
 	cJSON* jroot = NULL;
 	char   where[256] = { 0 };
 	char   set[256] = { 0 };
-	int    formed = 0;
+	int    formed   = 0;
+	char*  reqbody  = http_request_body(req);
 
-	if ((reqbuf = req->input_buffer) == NULL || (evbuflen = evbuffer_get_length(reqbuf)) == 0) return  http_response_wrong(kvq, req, param, "参数错误.");;
-
-	while ((reqbody = calloc(1, evbuflen + 1)) == NULL) Sleep(1);
-
-	evbuffer_remove(reqbuf, reqbody, evbuflen);
-
-	if ((jroot = cJSON_Parse((const char*)reqbody)) == NULL) {
-		free(reqbody);
+	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL) {
+		if (reqbody) free(reqbody);
 		return  http_response_wrong(kvq, req, param, "参数错误.");
 	}
 
 	cJSON* jwhere = cJSON_GetObjectItem(jroot, "where");
 	cJSON* jset   = cJSON_GetObjectItem(jroot, "set");
-
 	if (jset == NULL || jwhere == NULL){
 		free(reqbody); cJSON_Delete(jroot);
 		return http_response_wrong(kvq, req, param, "参数错误.");;
 	}
 
-	formed = sqlpartstr_fromjson(jwhere, g_fields_settled, _arraysize(g_fields_settled), "where", where, sizeof(where));
-	if (!formed){
-		free(reqbody); cJSON_Delete(jroot);
-		return http_response_wrong(kvq, req, param, "参数错误.");;
-	}
-
-	formed = sqlpartstr_fromjson(jwhere, g_fields_settled, _arraysize(g_fields_settled), "set", set, sizeof(set));
-	if (!formed){
+	if (!sqlpartstr_fromjson(jwhere, g_fields_settled, _arraysize(g_fields_settled), "where", where, sizeof(where))||
+		!sqlpartstr_fromjson(jwhere, g_fields_settled, _arraysize(g_fields_settled), "set", set, sizeof(set)))
+	{
 		free(reqbody); cJSON_Delete(jroot);
 		return http_response_wrong(kvq, req, param, "参数错误.");;
 	}
@@ -664,15 +540,9 @@ static int mod_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 	}
 
-	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
-	evbuffer_add_printf(respbuf, g_membuffer->data);
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	//clear jobs..
-	evbuffer_free(respbuf);
 	cJSON_Delete(jroot);
 	free(reqbody);
 
