@@ -31,11 +31,14 @@ static void* _worker(void* param)
 		while (jqueue_size(transfer->_workqueue) == 0 && wait == 0 )//predicate in critical area..
 			wait = pthread_cond_timedwait(&transfer->_cond, &transfer->_mt_signal, &abstime);
 
-		if (wait != 0 && wait != ETIMEDOUT) break;//error
+		if (wait != 0 && wait != ETIMEDOUT) { pthread_mutex_unlock(&transfer->_mt_signal); break; }//error
 
 		if (jqueue_size(transfer->_workqueue) > 0){
 			job_t job = (job_t)jqueue_pull(transfer->_workqueue);
+			
 			dojob(job);
+
+			free(job);
 		}
 
 		pthread_mutex_unlock(&transfer->_mt_signal);
