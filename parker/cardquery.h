@@ -9,4 +9,12 @@ typedef struct _cardquery_st{
 cardquery_t cardquery_new();
 void        cardquery_free(cardquery_t query);
 
+
+typedef struct _card_st{
+	char cardid[64];
+	char cardsn[64];
+	char ctime[32];
+	char utime[32];
+}card_st,*card_t;
+
 #endif

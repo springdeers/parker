@@ -9,6 +9,7 @@
 //#include "cJSON.h"
 #include "json/cJSON.h"
 #include "orderquery.h"
+#include "cardquery.h"
 
 int db_load_scores(mysqlquery_t dbinst,int cardid,scores_t scores);
 
@@ -82,5 +83,40 @@ int db_delete_settled_orders(mysqlquery_t dbinst, char* orderno, char* username)
 *username != NULL时  则删除符合uername条件的订单项目
 */
 int db_modify_settled_orders(mysqlquery_t dbinst, char* where, char* set);
+
+//////////////////////////////////////////////////////////////////////////
+/*
+*增减卡片信息。
+*返回1：成功；0：失败。
+*/
+int db_save_card(mysqlquery_t dbinst, char * cardid, char* cardsn);
+
+/*
+*删除卡片信息。
+*cardid可为NULL,cardsn可为NULL;当cardid=NULl并且cardsn=NULL时，清空所有记录.
+*返回1：成功；0：失败。
+*/
+int db_del_card(mysqlquery_t dbinst, char * cardid, char* cardsn);
+
+/*
+*根据cardid更改卡片信息。
+*cardid可为NULL,cardsn可为NULL;
+*返回1：成功；0：失败。
+*/
+int db_mod_card_byid(mysqlquery_t dbinst, char * cardid, char* cardsn);
+
+/*
+*根据cardsn更改卡片信息。
+*cardid可为NULL,cardsn可为NULL;
+*返回1：成功；0：失败。
+*/
+int db_mod_card_bysn(mysqlquery_t dbinst, char * cardid, char* cardsn);
+
+/*
+*查询卡片信息。
+*cardid可为NULL,cardsn可为NULL;两者均为NULL时，返回所有记录.
+*返回1：成功；0：失败。
+*/
+int db_query_card(mysqlquery_t dbinst, char*cardid,char* cardsn,card_t* cards, int *count);
 
 #endif

@@ -17,6 +17,7 @@
 #include "struct.h"
 #include "mysqldb.h"
 #include "dbaccess.h"
+#include "queryhelper.h"
 
 extern config_st    g_conf;
 extern mysqlquery_t sqlobj_venue_db;
@@ -29,22 +30,23 @@ extern log_t  g_log;
 extern DWORD         score_scs_update_time;
 extern scores_scs_st scores_scs;
 
-static int card_insert(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
-static int card_about(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
+static int card_add(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
+static int card_del(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
+static int card_mod(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
+static int card_get(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 static int card_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param);
 
-
 static route_entry_st route_map[] = {
-	{ "/card/insert", card_insert, "" },
-	{ "/card/about", card_about, "" },
-	{ "/card/help", card_help, "" },
+	{ "/card/add", card_add,"" },
+	{ "/card/del", card_del,"" },
+	{ "/card/mod", card_mod,"" },
+	{ "/card/get", card_get, "" },
+	{ "/card/help", card_help,"" },
 	{ NULL, NULL },
 };
 
 int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	struct evbuffer* buf = NULL;
-
 	if (g_helpstr == NULL){
 		FILE* file = fopen("./wapihelp.txt", "rb");
 		if (file){
@@ -63,10 +65,6 @@ int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 			g_helpstr = "help file not exist.";
 	}
 
-	while ((buf =evbuffer_new()) == NULL) Sleep(1);
-
-	if (req == NULL) { evbuffer_free(buf); return eRoute_failed; }
-
 	_assure_clearbuff(g_membuffer,1024);
 
 	membuff_add_printf(g_membuffer, "{\"type\":\"help\",\"code\":\"-1\",\"rslt\":");
@@ -74,10 +72,7 @@ int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	membuff_addchar(g_membuffer, '}');
 	membuff_addchar(g_membuffer, '\0');
 
-	evbuffer_add_printf(buf, g_membuffer->data);
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
-	evbuffer_free(buf);
+	http_response_ok(kvq, req,param, g_membuffer->data);
 
 	return eRoute_success;
 }
@@ -99,85 +94,115 @@ void   cardquery_free(cardquery_t query)
 	if (query) free(query);
 }
 //////////////////////////////////////////////////////////////////////////
-
-int card_insert(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
+//get method.
+int card_add(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	int i = 0, score_scs_freeflag = 0;
-	scores_st scores;
-	char * scsstr;
-	struct evbuffer* buf = NULL;
 	const char* cardid = evhttp_find_header(kvq, "cardid");
 	const char* cardsn = evhttp_find_header(kvq, "cardsn");
 
-	while ((buf = evbuffer_new()) == NULL) Sleep(1);
-	if (cardid == NULL || req == NULL || strlen(cardid) == 0){evbuffer_free(buf); return eRoute_failed;}
-
-	//db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);
-	//db_card_insert(sqlobj_venue_db, atoi(cardid), cardsn);
-	//scores_shrink(&scores);
-
-	if (GetTickCount() - score_scs_update_time > g_conf.score_scs_refresh){
-		scores_scs_free(&scores_scs);
-		db_load_scores_scs(sqlobj_venue_db, &scores_scs);
-		score_scs_update_time = GetTickCount();
-		printf("refresh db_load_scores_scs..(%d)\n", score_scs_update_time);
-	}
-
+	if (cardid == NULL || req == NULL || strlen(cardid) == 0){ return eRoute_failed;}
 
 	_assure_clearbuff(g_membuffer, 4096);
 
-	membuff_add_printf(g_membuffer, "{\"type\":\"score\",\"code\":\"0\",\"iccard\":\"%s\",\"rslt\":", cardid);
-	membuff_add_printf(g_membuffer, "%c", '[');
+	if (db_save_card(sqlobj_venue_db, cardid, cardsn))
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"success\"}");
+	else
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 
-	for (; i < scores.scorenum; i++){//?
-		scsstr = replace_score_suggest(&scores.score[i], &scores_scs);
-		membuff_add_printf(g_membuffer, "%s,", scsstr);
-		if (scsstr)  free(scsstr);
-		//membuff_add_printf(g_membuffer,"%s,",scores.score[i].json);
-	}
-
-	if (g_membuffer->data[g_membuffer->len - 1] == ',') g_membuffer->len--;
-	membuff_addstr(g_membuffer, "]}", sizeof("]}"));
-
-	evbuffer_add_printf(buf, membuff_data(g_membuffer));
-
-	//回复给客户端
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
-	evbuffer_free(buf);
-
-	scores_freeitems(&scores);
-
-	/*if (queryonly && strcmp(queryonly, "true") == 0)
-		return eRoute_success;*/
-
-	db_clear_scores(sqlobj_venue_db, atoi(cardid));
+	http_response_ok(kvq, req,param, g_membuffer->data);
 
 	return eRoute_success;
 }
 
-int card_about(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
+//get method.
+//删除卡片.
+int card_del(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	struct evbuffer* buf = evbuffer_new();
-	if (buf == NULL) return eRoute_failed;
+	const char* cardid = evhttp_find_header(kvq, "cardid");
+	const char* cardsn = evhttp_find_header(kvq, "cardsn");
 
-	if (req == NULL || kvq == NULL) {evbuffer_free(buf); return eRoute_failed;}
+	if (req == NULL) return eRoute_failed; 
 
 	_assure_clearbuff(g_membuffer, 4096);
 
-	membuff_add_printf(g_membuffer, "{\"type\":\"help\",\"code\":\"-1\",\"rslt\":");
-	membuff_add_printf(g_membuffer, "\"%s\"", "score query api.");
-	membuff_addstr(g_membuffer, "}",sizeof("}"));
+	if (db_del_card(sqlobj_venue_db, cardid, cardsn))
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"success\"}");
+	else
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
 
-	evbuffer_add_printf(buf, membuff_data(g_membuffer));
-	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
-
-	evbuffer_free(buf);
+	http_response_ok(kvq, req, param, g_membuffer->data);
 
 	return eRoute_success;
 }
 
+//get method.
+//更改卡片.
+int card_mod(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
+{
+	const char* cardid = evhttp_find_header(kvq, "cardid");
+	const char* cardsn = evhttp_find_header(kvq, "cardsn");
+	const char* direction = evhttp_find_header(kvq, "direction");
+	int  mod = 0;
+
+	if ((cardid == NULL && cardsn == NULL) || req == NULL || direction == NULL){
+		return http_response_wrong(kvq, req,param,"参数错误.");
+	}
+
+	_assure_clearbuff(g_membuffer, 4096);
+
+	if (strcmp("id2sn", direction) == 0)
+		mod = db_mod_card_byid(sqlobj_venue_db, cardid, cardsn);
+	else if (strcmp("sn2id", direction) == 0)
+		mod = db_mod_card_bysn(sqlobj_venue_db, cardid, cardsn);
+	else{
+		return http_response_ok(kvq, req, param, "参数错误.");
+	}
+
+	if (mod)
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"success\"}");
+	else
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
+
+	http_response_ok(kvq, req, param, g_membuffer->data);
+
+	return eRoute_success;
+}
+
+//get method.
+//查询卡片.
+int card_get(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
+{
+	const char* cardid = evhttp_find_header(kvq, "cardid");
+	const char* cardsn = evhttp_find_header(kvq, "cardsn");
+	int  getted = 0;
+	int  count  = 0;
+	card_t cards = NULL;
+
+	if (req == NULL) return http_response_wrong(kvq, req, param, "参数错误.");
+
+	_assure_clearbuff(g_membuffer, 4096);
+
+	getted = db_query_card(sqlobj_venue_db, cardid, cardsn, &cards, &count);
+
+	if (getted){
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"ok\",\"data\":[");
+		for (int i = 0; i < count; i++)
+			membuff_add_printf(g_membuffer, "{\"cardid\":\"%s\",\"cardsn\":\"%s\",\"uptime\":\"%s\",\"ctime\":\"%s\"},",\
+				               cards[i].cardid, 
+							   cards->cardsn, 
+							   cards->utime, 
+							   cards->ctime);										  		
+		
+		membuff_trim(g_membuffer, ",");
+		membuff_addchar(g_membuffer,'\0');
+	}
+	else
+		membuff_add_printf(g_membuffer, "{\"rslt\":\"failed\",\"reason\":\"数据库操作失败！\"}");
+
+	http_response_ok(kvq, req, param, g_membuffer->data);
+
+	return eRoute_success;
+}
 
 int card_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {

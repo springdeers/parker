@@ -600,3 +600,28 @@ int db_modify_settled_orders(mysqlquery_t dbinst, char* where, char* set)
 {
 	return 1;//to be continued..
 }
+
+int db_save_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_del_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_mod_card_byid(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_mod_card_bysn(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_query_card(mysqlquery_t dbinst, char*cardid, char* cardsn, card_t* cards, int *count)
+{
+	return 1;//to be continued..
+}
