@@ -17,7 +17,7 @@
 #include "struct.h"
 #include "mysqldb.h"
 #include "dbaccess.h"
-#include "queryhelper.h"
+#include "httpquery_helper.h"
 
 extern config_st    g_conf;
 extern mysqlquery_t sqlobj_venue_db;
@@ -145,7 +145,7 @@ int card_mod(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	int  mod = 0;
 
 	if ((cardid == NULL && cardsn == NULL) || req == NULL || direction == NULL){
-		return http_response_wrong(kvq, req,param,"参数错误.");
+		return http_response_error(kvq, req,param,"参数错误.");
 	}
 
 	_assure_clearbuff(g_membuffer, 4096);
@@ -178,7 +178,7 @@ int card_get(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	int  count  = 0;
 	card_t cards = NULL;
 
-	if (req == NULL) return http_response_wrong(kvq, req, param, "参数错误.");
+	if (req == NULL) return http_response_error(kvq, req, param, "参数错误.");
 
 	_assure_clearbuff(g_membuffer, 4096);
 

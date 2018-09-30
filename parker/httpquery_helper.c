@@ -1,4 +1,4 @@
-#include "queryhelper.h"
+#include "httpquery_helper.h"
 #include <time.h>
 #include "cJSON.h"
 #include "event2/event.h"
@@ -76,7 +76,7 @@ int sqlpartstr_fromquery(struct evkeyvalq*kvq, char*fields[], int fieldcount, ch
 	return 1;
 }
 
-int http_response_wrong(struct evkeyvalq*kvq, struct evhttp_request* req, void* param,char* strerr)
+int http_response_error(struct evkeyvalq*kvq, struct evhttp_request* req, void* param,char* strerr)
 {
 	membuff_t mb = membuff_new(1024);
 

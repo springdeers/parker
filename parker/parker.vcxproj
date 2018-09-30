@@ -182,7 +182,7 @@
     <ClInclude Include="membuff.h" />
     <ClInclude Include="mysqldb.h" />
     <ClInclude Include="orderquery.h" />
-    <ClInclude Include="queryhelper.h" />
+    <ClInclude Include="httpquery_helper.h" />
     <ClInclude Include="route.h" />
     <ClInclude Include="scenerslt.h" />
     <ClInclude Include="scorerslt.h" />
@@ -268,7 +268,7 @@
     <ClCompile Include="orderquery.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="queryhelper.c">
+    <ClCompile Include="httpquery_helper.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="route.c">
