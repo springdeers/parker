@@ -114,5 +114,5 @@ int http_response_ok(struct evkeyvalq*kvq, struct evhttp_request* req, void* par
 
 	evbuffer_free(respbuf);
 
-	return 1;
+	return eRoute_success;
 }
