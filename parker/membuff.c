@@ -111,3 +111,18 @@ membuff_t membuff_add_printf(membuff_t mb,char* fmt,...)
 
 	return mb;
 }
+
+membuff_t membuff_trim(membuff_t mb, char* trimstr)
+{
+	if (trimstr == NULL || mb == NULL || mb->len == 0 || strlen(trimstr) == 0) return mb;
+
+	while (mb->len>0)
+	{
+		if (strchr(trimstr, mb->data[mb->len - 1]))
+			mb->data[--mb->len] = '\0';
+		else
+			break;
+	}
+
+	return mb;
+}
