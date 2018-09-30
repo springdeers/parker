@@ -560,7 +560,12 @@ int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_s
 	return rt;
 }
 
-int db_save_unsettled_orders(mysqlquery_t dbinst, unsettled_order_t orders,int count)
+int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_t ** outorders, int * count)
+{
+	return 1;//to be continued..
+}
+
+int db_save_unsettled_orders(mysqlquery_t dbinst, unsettled_order_t orders, int count)
 {
 	return 1;//to be continued..
 }
@@ -575,8 +580,48 @@ int db_modify_unsettled_orders(mysqlquery_t dbinst, char* where, char* set)
 	return 1;//to be continued..
 }
 
-int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_t ** outorders, int * count)
+int db_query_settled_orders(mysqlquery_t dbinst, char* where, settled_order_t ** outorders, int * count)
 {
 	*count = 0;
+	return 1;//to be continued..
+}
+
+int db_save_settled_orders(mysqlquery_t dbinst, settled_order_t orders, int count)
+{
+	return 1;//to be continued..
+}
+
+int db_delete_settled_orders(mysqlquery_t dbinst, char* orderno, char* username)
+{
+	return 1;//to be continued..
+}
+
+int db_modify_settled_orders(mysqlquery_t dbinst, char* where, char* set)
+{
+	return 1;//to be continued..
+}
+
+int db_save_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_del_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_mod_card_byid(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_mod_card_bysn(mysqlquery_t dbinst, char * cardid, char* cardsn)
+{
+	return 1;//to be continued..
+}
+
+int db_query_card(mysqlquery_t dbinst, char*cardid, char* cardsn, card_t* cards, int *count)
+{
 	return 1;//to be continued..
 }

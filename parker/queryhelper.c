@@ -11,6 +11,21 @@
 
 #define NULL 0
 
+char* http_request_body(struct evhttp_request* req)
+{
+	char * reqbody = NULL;
+	struct evbuffer* reqbuf = NULL;
+	int    evbuflen = 0;
+
+	if (req == NULL || (reqbuf = req->input_buffer) == NULL || (evbuflen = evbuffer_get_length(reqbuf)) == 0) return NULL;
+
+	while ((reqbody = calloc(1, evbuflen + 1)) == NULL) Sleep(1);
+
+	evbuffer_remove(reqbuf, reqbody, evbuflen);
+
+	return reqbody;
+}
+
 int  sqlpartstr_fromjson(struct cJSON* obj, char*fields[], int fieldcount, char* name, char* obuffer, int obufferlen)
 {
 	int printn = 0;
@@ -35,7 +50,7 @@ int  sqlpartstr_fromjson(struct cJSON* obj, char*fields[], int fieldcount, char*
 				printn += sprintf_s(obuffer + printn, obufferlen - 1 - printn, "%s=%s,", fields[i], item->valuestring);
 			}
 		}
-		char* palpha_comma = strchr(obuffer, ',');
+		char* palpha_comma = strrchr(obuffer, ',');
 		*palpha_comma = '\0';
 
 		return 1;
@@ -83,4 +98,21 @@ int http_response_wrong(struct evkeyvalq*kvq, struct evhttp_request* req, void* 
 	evbuffer_free(buf);
 
 	return eRoute_success;
+}
+
+int http_response_ok(struct evkeyvalq*kvq, struct evhttp_request* req, void* param, char* str)
+{
+	struct evbuffer* respbuf = NULL;
+	if (str == NULL) str = "";
+	
+	while ((respbuf = evbuffer_new()) == NULL) Sleep(1);
+	evbuffer_add_printf(respbuf, str);
+
+	//回复给客户端
+	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
+	evhttp_send_reply(req, HTTP_OK, "OK", respbuf);
+
+	evbuffer_free(respbuf);
+
+	return 1;
 }

@@ -81,6 +81,8 @@ int route(router_t router, char* path, struct evkeyvalq*kvq, struct evhttp_reque
 		}else if (rtn == eRoute_failed){
 			rtn = router_help(router, kvq, req, param);
 			break;
+		}else if (rtn == eRoute_failed_final){
+			break;
 		}
 		
 		router = router->next;
