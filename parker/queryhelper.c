@@ -50,7 +50,7 @@ int  sqlpartstr_fromjson(struct cJSON* obj, char*fields[], int fieldcount, char*
 				printn += sprintf_s(obuffer + printn, obufferlen - 1 - printn, "%s=%s,", fields[i], item->valuestring);
 			}
 		}
-		char* palpha_comma = strchr(obuffer, ',');
+		char* palpha_comma = strrchr(obuffer, ',');
 		*palpha_comma = '\0';
 
 		return 1;
