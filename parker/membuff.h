@@ -22,6 +22,7 @@ extern "C"{
 	membuff_t membuff_addstr(membuff_t mb,char* p,int len);
 	membuff_t membuff_addchar(membuff_t mb,char p);
 	membuff_t membuff_add_printf(membuff_t, char* fmt, ...);
+	membuff_t membuff_trim(membuff_t, char* trimstr);
 
 #define _assure_clearbuff(__buff_ , __size_){\
 	if(__buff_ == NULL) __buff_ = membuff_new(__size_);\

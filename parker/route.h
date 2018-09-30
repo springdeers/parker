@@ -1,7 +1,7 @@
 #ifndef _ROUTE_H__
 #define _ROUTE_H__
 
-enum{eRoute_null,eRoute_success,eRoute_failed};
+enum{eRoute_null,eRoute_success,eRoute_failed,eRoute_wrongparam};
 
 typedef int (*route_pfn)(struct evkeyvalq*kvq,struct evhttp_request* req,void* param);
 

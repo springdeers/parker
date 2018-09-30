@@ -8,6 +8,7 @@
 #include "visitrslt.h"
 //#include "cJSON.h"
 #include "json/cJSON.h"
+#include "orderquery.h"
 
 int db_load_scores(mysqlquery_t dbinst,int cardid,scores_t scores);
 
@@ -33,5 +34,10 @@ int db_load_scores_scs(mysqlquery_t dbinst,scores_scs_t scores);
 int db_query_remains(mysqlquery_t dbinst, scores_t scores);
 int db_query_credits(mysqlquery_t dbinst, int* cnt, int* credits);
 int db_query_travelername(mysqlquery_t dbinst, int cardid, char **name);
+
+int db_query_unsettled_orders(mysqlquery_t dbinst, char* where,unsettled_order_t ** outorders,int * count);
+int db_save_unsettled_orders(mysqlquery_t dbinst,unsettled_order_t orders,int count);
+int db_delete_unsettled_orders(mysqlquery_t dbinst, char* orderno, char* username);
+int db_modify_unsettled_orders(mysqlquery_t dbinst, char* where, char* set);
 
 #endif
