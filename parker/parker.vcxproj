@@ -182,6 +182,7 @@
     <ClInclude Include="membuff.h" />
     <ClInclude Include="mysqldb.h" />
     <ClInclude Include="orderquery.h" />
+    <ClInclude Include="queryhelper.h" />
     <ClInclude Include="route.h" />
     <ClInclude Include="scenerslt.h" />
     <ClInclude Include="scorerslt.h" />
@@ -189,6 +190,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="struct.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="tool.h" />
     <ClInclude Include="useractivity.h" />
     <ClInclude Include="userquery.h" />
     <ClInclude Include="visitrslt.h" />
@@ -266,6 +268,9 @@
     <ClCompile Include="orderquery.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="queryhelper.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="route.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -295,6 +300,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tool.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="useractivity.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
