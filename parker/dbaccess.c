@@ -705,8 +705,9 @@ int db_modify_unsettled_orders(mysqlquery_t dbinst, char* where, char* set)
 		return _QFAILE;
 	}
 }
+
 //////////////////////////////////////////////////////////////////////////
-#define _settled_orders_fields_cnt 11
+#define _settled_orders_fields_cnt   13
 #define _settled_orders_fields       "ordertime,orderno,username,age,identitycard,phone,workunit,email,team_name,group_name,leader,oper,opertime"
 #define _settled_orders_fields_para  "'%s','%s','%s',%d,'%s','%s','%s','%s','%s','%s','%s','%s','%s'"
 #define _settled_orders_values(_st_) _st_->orderdate,_st_->orderno,_st_->username,_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader,_st_->operator,_st_->opertime
