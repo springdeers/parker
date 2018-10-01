@@ -7,7 +7,7 @@
 	__time_.tv_nsec = (__timeout_ms_ % 1000) * 1000000;\
 }
 
-void dojob(job_t job)
+static void dojob(job_t job)
 {
 	if (job == NULL) return;
 
