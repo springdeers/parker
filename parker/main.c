@@ -58,6 +58,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	sqlobj_venue_db    = mysqldb_connect_init(g_conf.venue_db_ip, g_conf.venue_db_port, g_conf.venue_db_username, g_conf.venue_db_userpwd, g_conf.venue_db_name, mysql_querycallback);    	
 	sqlobj_userinfo_db = mysqldb_connect_init(g_conf.userinfo_db_ip, g_conf.userinfo_db_port, g_conf.userinfo_db_username, g_conf.userinfo_db_userpwd, g_conf.userinfo_db_name, mysql_querycallback);
 	
+	//开启后台的数据转移任务.
 	transfers_startup(&g_conf);
 
 	router_setup();
