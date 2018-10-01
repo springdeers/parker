@@ -36,15 +36,19 @@ static void* _worker(void* param)
 			break; 
 		}
 
-		if (jqueue_size(transfer->_workqueue) > 0){
-			job_t job = (job_t)jqueue_pull(transfer->_workqueue);
-			
+		while (jqueue_size(transfer->_workqueue) > 0){
+			jqueue_push(transfer->_workingqueue, jqueue_pull(transfer->_workqueue), 0);
+		}
+		
+		pthread_mutex_unlock(&transfer->_mt_signal);
+		
+		//非锁定区域,防止消费者线程阻塞生产者线程.
+		printf("task inqueue is %d.\n");
+		while (jqueue_size(transfer->_workingqueue) > 0){
+			job_t job = (job_t)jqueue_pull(transfer->_workingqueue);
 			dojob(job);
-
 			free(job);
 		}
-
-		pthread_mutex_unlock(&transfer->_mt_signal);
 	}
 
 	return (void*)1;
@@ -58,7 +62,8 @@ transfer_t transfer_new()
 
 	rt->_ctime = time(0);
 
-	rt->_workqueue = jqueue_new();
+	rt->_workqueue    = jqueue_new();
+	rt->_workingqueue = jqueue_new();
 
 	pthread_cond_init(&rt->_cond, NULL);
 
@@ -123,4 +128,11 @@ int      transfer_postAjob(transfer_t transfer, job_st job)
 	pthread_mutex_unlock(&transfer->_mt_signal);
 
 	return 1;
+}
+
+int  transfer_jobs_remain_cnt(transfer_t transfer)
+{
+	if (transfer == 0) return 0;
+
+	return jqueue_size(transfer->_workingqueue);
 }
