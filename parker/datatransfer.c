@@ -54,20 +54,39 @@ static void* _worker(void* param)
 	return (void*)1;
 }
 
+transfer_t transfer_init(transfer_t transfer)
+{
+	if (transfer == NULL) return NULL;
+
+	transfer->_ctime = time(0);
+
+	transfer->_workqueue = jqueue_new();
+	transfer->_workingqueue = jqueue_new();
+
+	pthread_cond_init(&transfer->_cond, NULL);
+
+	pthread_mutex_init(&transfer->_mt_signal, NULL);
+}
+
+transfer_t transfer_clear(transfer_t transfer)
+{
+	if (transfer == NULL) return NULL;
+
+	if (transfer->_workqueue)    jqueue_free(transfer->_workqueue);
+	if (transfer->_workingqueue) jqueue_free(transfer->_workingqueue);
+
+	pthread_mutex_destroy(&transfer->_mt_signal);
+
+	pthread_cond_destroy(&transfer->_cond);
+}
+
 transfer_t transfer_new()
 {
 	transfer_t rt = NULL;
 
 	while ((rt = calloc(1, sizeof(transfer_st))) == NULL) Sleep(1);
 
-	rt->_ctime = time(0);
-
-	rt->_workqueue    = jqueue_new();
-	rt->_workingqueue = jqueue_new();
-
-	pthread_cond_init(&rt->_cond, NULL);
-
-	pthread_mutex_init(&rt->_mt_signal, NULL);
+	transfer_init(rt);
 	
 	return rt;
 }
@@ -78,12 +97,7 @@ void       transfer_free(transfer_t transfer)
 	{
 		transfer_stop(transfer);
 
-		if (transfer->_workqueue) jqueue_free(transfer->_workqueue);
-
-		pthread_mutex_destroy(&transfer->_mt_signal);
-
-		pthread_cond_destroy(&transfer->_cond);
-		
+		transfer_clear(transfer);
 	}
 }
 
