@@ -1,5 +1,6 @@
 #include "dbaccess.h"
 #include <stdio.h>
+#include "tool.h"
 
 extern mysqlquery_t sqlobj_venue_db;
 
@@ -603,25 +604,152 @@ int db_modify_settled_orders(mysqlquery_t dbinst, char* where, char* set)
 
 int db_save_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn   = 0;
+	char timestr[32] = {0};
+
+	if (dbinst == NULL || (cardid == NULL && cardsn == NULL)) return _QFAILE;
+	if (cardsn == NULL) cardsn = "";
+	if (cardid == NULL) cardid = "";
+
+	current_time_str(timestr);
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "INSERT INTO tbCard(cardid,cardsn,ctime) VALUES(%s,%s,%s)", cardid, cardsn, timestr);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
+
+	
 }
 
 int db_del_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL) return _QFAILE;
+
+	if (cardsn == NULL && cardid == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard");
+	else if (cardid == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard WHERE cardsn=%s", cardsn);
+	else if (cardsn == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard WHERE cardid=%s", cardid);
+	else
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard WHERE cardid=%s AND cardsn=%s", cardid, cardsn);
+	
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_mod_card_byid(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || cardid == NULL) return _QFAILE;
+	if (cardsn == NULL)   cardsn = "";
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn,"UPDATE tbCard SET cardsn=%s WHERE cardid=%s", cardsn, cardid);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_mod_card_bysn(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || cardsn == NULL) return _QFAILE;
+	if (cardid == NULL)   cardid = "";
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "UPDATE tbCard SET cardid=%s WHERE cardsn=%s", cardid, cardsn);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_query_card(mysqlquery_t dbinst, char*cardid, char* cardsn, card_t* cards, int *count)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	*cards = NULL;
+	*count = 0;
+
+	if (dbinst == NULL || (cardsn == NULL && cardid == NULL)) return _QFAILE;
+
+	if (cardsn == NULL){
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn,"SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardid=%s", cardid);
+	}
+	else if (cardid == NULL){
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardsn=%s", cardsn);
+	}
+	else{
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardsn=%s AND cardid=%s", cardsn, cardid);
+	}
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		dbinst->m_res = mysql_store_result(dbinst->m_con);
+		*count = mysql_num_rows(dbinst->m_res);
+		*cards = calloc(*count, sizeof(card_st));
+
+		int ndx = 0;
+		while ((dbinst->m_row = mysql_fetch_row(dbinst->m_res)) != NULL)
+		{
+			if (dbinst->m_row[0]) strcpy_s((*cards)[ndx].cardid, sizeof((*cards)[ndx].cardid), dbinst->m_row[0]);
+			if (dbinst->m_row[1]) strcpy_s((*cards)[ndx].cardsn, sizeof((*cards)[ndx].cardsn), dbinst->m_row[1]);
+			if (dbinst->m_row[2]) strcpy_s((*cards)[ndx].utime, sizeof((*cards)[ndx].utime), dbinst->m_row[2]);
+			if (dbinst->m_row[3]) strcpy_s((*cards)[ndx].ctime, sizeof((*cards)[ndx].ctime), dbinst->m_row[3]);
+			ndx++;
+		}
+		mysql_free_result(dbinst->m_res);
+
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }

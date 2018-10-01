@@ -11,6 +11,9 @@
 #include "orderquery.h"
 #include "cardquery.h"
 
+#define _QOK     1
+#define _QFAILE  0
+
 int db_load_scores(mysqlquery_t dbinst,int cardid,scores_t scores);
 
 int db_load_scenes(mysqlquery_t dbinst,int sceneid,sceneinfos_t rslt);

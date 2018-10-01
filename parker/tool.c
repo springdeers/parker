@@ -429,3 +429,12 @@ void    vec_free(vec_t p)
 		free(p);
 	}
 }
+
+
+void current_time_str(char buffer[32])
+{
+	SYSTEMTIME t;
+
+	GetLocalTime(&t);
+	sprintf_s(buffer, sizeof(buffer), "%d-%02d-%02d %02d:%02d:%02d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+}

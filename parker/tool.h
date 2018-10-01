@@ -116,6 +116,7 @@ weektime_t myweektime(weektime_t wt);
 mytime_t   mylocaltime(mytime_t t);
 mytime_t   localtime2mytime(struct tm* src, mytime_t dest);
 int        str2hms(char* str, int* hour, int* minute, int* second);
+void       current_time_str(char buffer[32]);
 
 #define _DAYSECONDS(hour,minute,second) (hour*3600+minute*60+second)
 #define _SOW(day,hour,minute,second) (day*86400+hour*3600 + minute * 60 + second)
