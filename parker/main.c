@@ -64,8 +64,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	//启动服务在地址 127.0.0.1:9000 上
 	start_httpd("0.0.0.0",g_conf.svrport , httpd_callback, NULL);
 
-	while (1){ Sleep(1); }
-
+	//while (1){ Sleep(1); }
+	transfers_free();
 #ifdef WIN32
 	WSACleanup();
 #endif

@@ -19,17 +19,19 @@ static void* _worker(void* param)
 
 	if (transfer == NULL) return NULL;
 
-	struct timespec abstime;
-
+	struct timespec abstime = {0};
+	
 	while (transfer->_runing){
 		pthread_mutex_lock(&transfer->_mt_signal);
 
 		int wait = 0;
-
-		abstime_set(abstime, 100);//未来100ms时刻。
 		
 		while (jqueue_size(transfer->_workqueue) == 0 && wait == 0 )//predicate in critical area..
+		{
+			abstime_set(abstime, 1000);//未来1000ms时刻。
+			
 			wait = pthread_cond_timedwait(&transfer->_cond, &transfer->_mt_signal, &abstime);
+		}
 
 		if (wait != 0 && wait != ETIMEDOUT) {//error
 			pthread_mutex_unlock(&transfer->_mt_signal);
@@ -43,13 +45,15 @@ static void* _worker(void* param)
 		pthread_mutex_unlock(&transfer->_mt_signal);
 		
 		//非锁定区域,防止消费者线程阻塞生产者线程.
-		printf("task inqueue is %d.\n");
+		printf("task inqueue is %d.\n", jqueue_size(transfer->_workingqueue));
 		while (jqueue_size(transfer->_workingqueue) > 0){
 			job_t job = (job_t)jqueue_pull(transfer->_workingqueue);
 			dojob(job);
 			free(job);
 		}
 	}
+
+	transfer_clear(transfer);
 
 	return (void*)1;
 }
@@ -74,6 +78,9 @@ transfer_t transfer_clear(transfer_t transfer)
 
 	if (transfer->_workqueue)    jqueue_free(transfer->_workqueue);
 	if (transfer->_workingqueue) jqueue_free(transfer->_workingqueue);
+
+	transfer->_pth = NULL;
+	transfer->_runing = 0;
 
 	pthread_mutex_destroy(&transfer->_mt_signal);
 
