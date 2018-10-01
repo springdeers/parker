@@ -1,5 +1,7 @@
 #include "dbaccess.h"
 #include <stdio.h>
+#include "tool.h"
+#include "membuff.h"
 
 extern mysqlquery_t sqlobj_venue_db;
 
@@ -560,68 +562,455 @@ int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_s
 	return rt;
 }
 
-int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_t ** outorders, int * count)
+//////////////////////////////////////////////////////////////////////////
+#define _unsettled_orders_fields_cnt        11
+#define _unsettled_orders_fields            "ordertime,orderno,username,age,identitycard,phone,workunit,email,team_name,group_name,leader"
+#define _unsettled_orders_fields_para       "'%s','%s','%s',%d,'%s','%s','%s','%s','%s','%s','%s'"
+#define _unsettled_orders_values(_st_)      _st_->orderdate,_st_->orderno,_st_->username,_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader
+#define _unsettled_orders_fields_comma      "%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s"
+#define _unsettled_orders_values_ptr(_st_)  _st_->orderdate,_st_->orderno,_st_->username,&_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader
+
+int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_t * outorders, int * count)
 {
-	return 1;//to be continued..
+	char sql[1024] = { 0 };
+	int  printn = 0;
+
+	*outorders = NULL;
+	*count = 0;
+
+	if (dbinst == NULL || where == NULL || strlen(where) == 0) return _QFAILE;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, \
+		               "SELECT ("_unsettled_orders_fields")\
+					    FROM tbUnsettledOrder WHERE %s", where);
+	
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		dbinst->m_res = mysql_store_result(dbinst->m_con);
+
+		*count = mysql_num_rows(dbinst->m_res);
+		*outorders = calloc(*count, sizeof(unsettled_order_st));
+
+		membuff_t mb = membuff_new(2048);
+		int ndx = 0;
+		while ((dbinst->m_row = mysql_fetch_row(dbinst->m_res)) != NULL)
+		{
+			//try this instead...
+			for (int c = 0; c < _unsettled_orders_fields_cnt; c++){
+				if (dbinst->m_row[c])
+					membuff_add_printf(mb, "%s,", dbinst->m_row[c]);
+				else
+					membuff_add_printf(mb, "%s,", "");
+			}
+			sscanf(mb->data, _unsettled_orders_fields_comma, _unsettled_orders_values_ptr((&(*outorders)[ndx])));
+			//end try this instead...
+
+// 			if (dbinst->m_row[0]) strcpy_s((*outorders)[ndx].orderdate, sizeof((*outorders)[ndx].orderdate),	dbinst->m_row[0]);
+// 			if (dbinst->m_row[1]) strcpy_s((*outorders)[ndx].orderno,   sizeof((*outorders)[ndx].orderno),		dbinst->m_row[1]);
+// 			if (dbinst->m_row[2]) strcpy_s((*outorders)[ndx].username,  sizeof((*outorders)[ndx].username),		dbinst->m_row[2]);
+// 			if (dbinst->m_row[3]) (*outorders)[ndx].age,s_atoi(dbinst->m_row[3]);
+// 			if (dbinst->m_row[4]) strcpy_s((*outorders)[ndx].cardid,    sizeof((*outorders)[ndx].cardid),		dbinst->m_row[4]);
+// 			if (dbinst->m_row[5]) strcpy_s((*outorders)[ndx].telephone, sizeof((*outorders)[ndx].telephone),	dbinst->m_row[5]);
+// 			if (dbinst->m_row[6]) strcpy_s((*outorders)[ndx].workunit,  sizeof((*outorders)[ndx].workunit),		dbinst->m_row[6]);
+// 			if (dbinst->m_row[7]) strcpy_s((*outorders)[ndx].email,     sizeof((*outorders)[ndx].email),		dbinst->m_row[7]);
+// 			if (dbinst->m_row[8]) strcpy_s((*outorders)[ndx].team,      sizeof((*outorders)[ndx].team),			dbinst->m_row[8]);
+// 			if (dbinst->m_row[9]) strcpy_s((*outorders)[ndx].group,     sizeof((*outorders)[ndx].group),		dbinst->m_row[9]);
+// 			if (dbinst->m_row[10]) strcpy_s((*outorders)[ndx].teamleader, sizeof((*outorders)[ndx].teamleader), dbinst->m_row[10]);
+			ndx++;
+		}
+
+		membuff_free(mb);
+
+		mysql_free_result(dbinst->m_res);
+
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_save_unsettled_orders(mysqlquery_t dbinst, unsettled_order_t orders, int count)
 {
-	return 1;//to be continued..
+	membuff_t sql = membuff_new(8*1024);
+	membuff_t mbuffdata = membuff_new(4*1024);
+
+	if (dbinst == NULL || orders == NULL || count < 1) return _QFAILE;
+	
+	for (int i = 0; i < count; i++)
+		membuff_add_printf(mbuffdata, "("_unsettled_orders_fields_para"),", _unsettled_orders_values((&orders[i])));
+	membuff_trim(mbuffdata, ",");
+	membuff_addstr(mbuffdata, ";", 2);
+
+	membuff_add_printf(sql, "INSERT INTO tbUnsettledOrder("_unsettled_orders_fields") VALUES %s", membuff_data(mbuffdata));
+
+	if (mysql_real_query(dbinst->m_con, membuff_data(sql), membuff_len(sql)) == 0)
+	{
+		membuff_free(sql);
+		membuff_free(mbuffdata);
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		membuff_free(sql);
+		membuff_free(mbuffdata);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+
+		return _QFAILE;
+	}
 }
 
 int db_delete_unsettled_orders(mysqlquery_t dbinst, char* orderno, char* username)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst  == NULL || (orderno == NULL && username == NULL)) return _QFAILE;
+	if (orderno == NULL)  return _QFAILE;
+
+	if (username == NULL){
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbUnsettledOrder"\
+			"where orderno=%s");
+	}
+	else
+	{
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbUnsettledOrder"\
+			" where orderno=%s AND username=%s", orderno,username);
+	}
+
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_modify_unsettled_orders(mysqlquery_t dbinst, char* where, char* set)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || where == NULL || set == NULL || strlen(where) == 0 || strlen(set) == NULL) return _QFAILE;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "UPDATE tbUnsettledOrder SET %s  WHERE %s", set, where);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
-int db_query_settled_orders(mysqlquery_t dbinst, char* where, settled_order_t ** outorders, int * count)
+//////////////////////////////////////////////////////////////////////////
+#define _settled_orders_fields_cnt   13
+#define _settled_orders_fields       "ordertime,orderno,username,age,identitycard,phone,workunit,email,team_name,group_name,leader,oper,opertime"
+#define _settled_orders_fields_para  "'%s','%s','%s',%d,'%s','%s','%s','%s','%s','%s','%s','%s','%s'"
+#define _settled_orders_values(_st_) _st_->orderdate,_st_->orderno,_st_->username,_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader,_st_->operator,_st_->opertime
+
+int db_query_settled_orders(mysqlquery_t dbinst, char* where, settled_order_t * outorders, int * count)
 {
+	char sql[1024] = { 0 };
+	int  printn = 0;
+
+	*outorders = NULL;
 	*count = 0;
-	return 1;//to be continued..
+
+	if (dbinst == NULL || where == NULL || strlen(where) == 0) return _QFAILE;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, \
+		"SELECT ("_settled_orders_fields") FROM tbSettledOrder WHERE %s", where);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		dbinst->m_res = mysql_store_result(dbinst->m_con);
+
+		*count = mysql_num_rows(dbinst->m_res);
+		*outorders = calloc(*count, sizeof(settled_order_st));
+		
+		int ndx = 0;
+		while ((dbinst->m_row = mysql_fetch_row(dbinst->m_res)) != NULL)
+		{
+			if (dbinst->m_row[0]) strcpy_s((*outorders)[ndx].orderdate, sizeof((*outorders)[ndx].orderdate), dbinst->m_row[0]);
+			if (dbinst->m_row[1]) strcpy_s((*outorders)[ndx].orderno,   sizeof((*outorders)[ndx].orderno), dbinst->m_row[1]);
+			if (dbinst->m_row[2]) strcpy_s((*outorders)[ndx].username,  sizeof((*outorders)[ndx].username), dbinst->m_row[2]);
+			if (dbinst->m_row[3]) (*outorders)[ndx].age, s_atoi(dbinst->m_row[3]);
+			if (dbinst->m_row[4]) strcpy_s((*outorders)[ndx].cardid,    sizeof((*outorders)[ndx].cardid), dbinst->m_row[4]);
+			if (dbinst->m_row[5]) strcpy_s((*outorders)[ndx].telephone, sizeof((*outorders)[ndx].telephone), dbinst->m_row[5]);
+			if (dbinst->m_row[6]) strcpy_s((*outorders)[ndx].workunit,  sizeof((*outorders)[ndx].workunit), dbinst->m_row[6]);
+			if (dbinst->m_row[7]) strcpy_s((*outorders)[ndx].email,     sizeof((*outorders)[ndx].email), dbinst->m_row[7]);
+			if (dbinst->m_row[8]) strcpy_s((*outorders)[ndx].team,      sizeof((*outorders)[ndx].team), dbinst->m_row[8]);
+			if (dbinst->m_row[9]) strcpy_s((*outorders)[ndx].group,     sizeof((*outorders)[ndx].group), dbinst->m_row[9]);
+			if (dbinst->m_row[10]) strcpy_s((*outorders)[ndx].teamleader, sizeof((*outorders)[ndx].teamleader), dbinst->m_row[10]);
+			if (dbinst->m_row[11]) strcpy_s((*outorders)[ndx].operator, sizeof((*outorders)[ndx].group), dbinst->m_row[9]);
+			if (dbinst->m_row[12]) strcpy_s((*outorders)[ndx].opertime, sizeof((*outorders)[ndx].teamleader), dbinst->m_row[10]);
+			ndx++;
+		}
+		mysql_free_result(dbinst->m_res);
+
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_save_settled_orders(mysqlquery_t dbinst, settled_order_t orders, int count)
 {
-	return 1;//to be continued..
+	membuff_t sql = membuff_new(8 * 1024);
+	membuff_t mbuffdata = membuff_new(4 * 1024);
+
+	if (dbinst == NULL || orders == NULL || count < 1) return _QFAILE;
+
+	for (int i = 0; i < count; i++)
+		membuff_add_printf(mbuffdata, "("_settled_orders_fields_para"),", _settled_orders_values((&orders[i])));
+	membuff_trim(mbuffdata, ",");
+	membuff_addstr(mbuffdata, ";", 2);
+
+	membuff_add_printf(sql, "INSERT INTO tbSettledOrder("_settled_orders_fields") VALUES %s", membuff_data(mbuffdata));
+
+	if (mysql_real_query(dbinst->m_con, membuff_data(sql), membuff_len(sql)) == 0)
+	{
+		membuff_free(sql);
+		membuff_free(mbuffdata);
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		membuff_free(sql);
+		membuff_free(mbuffdata);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+
+		return _QFAILE;
+	}
 }
 
 int db_delete_settled_orders(mysqlquery_t dbinst, char* orderno, char* username)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || (orderno == NULL && username == NULL)) return _QFAILE;
+	if (orderno == NULL)  return _QFAILE;
+
+	if (username == NULL){
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbSettledOrder"\
+			"where orderno=%s");
+	}
+	else
+	{
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbSettledOrder"\
+			" where orderno=%s AND username=%s", orderno, username);
+	}
+
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_modify_settled_orders(mysqlquery_t dbinst, char* where, char* set)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || where == NULL || set == NULL || strlen(where) == 0 || strlen(set) == NULL) return _QFAILE;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "UPDATE tbSettledOrder SET %s  WHERE %s", set, where);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_save_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn   = 0;
+	char timestr[32] = {0};
+
+	if (dbinst == NULL || (cardid == NULL && cardsn == NULL)) return _QFAILE;
+	if (cardsn == NULL) cardsn = "";
+	if (cardid == NULL) cardid = "";
+
+	current_time_str(timestr);
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "INSERT INTO tbCard(cardid,cardsn,ctime) VALUES(%s,%s,%s)", cardid, cardsn, timestr);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
+
+	
 }
 
 int db_del_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL) return _QFAILE;
+
+	if (cardsn == NULL && cardid == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard");
+	else if (cardid == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard WHERE cardsn=%s", cardsn);
+	else if (cardsn == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard WHERE cardid=%s", cardid);
+	else
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbCard WHERE cardid=%s AND cardsn=%s", cardid, cardsn);
+	
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_mod_card_byid(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || cardid == NULL) return _QFAILE;
+	if (cardsn == NULL)   cardsn = "";
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn,"UPDATE tbCard SET cardsn=%s WHERE cardid=%s", cardsn, cardid);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_mod_card_bysn(mysqlquery_t dbinst, char * cardid, char* cardsn)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	if (dbinst == NULL || cardsn == NULL) return _QFAILE;
+	if (cardid == NULL)   cardid = "";
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "UPDATE tbCard SET cardid=%s WHERE cardsn=%s", cardid, cardsn);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }
 
 int db_query_card(mysqlquery_t dbinst, char*cardid, char* cardsn, card_t* cards, int *count)
 {
-	return 1;//to be continued..
+	char sql[512] = { 0 };
+	int  printn = 0;
+
+	*cards = NULL;
+	*count = 0;
+
+	if (dbinst == NULL || (cardsn == NULL && cardid == NULL)) return _QFAILE;
+
+	if (cardsn == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn,"SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardid=%s", cardid);
+	else if (cardid == NULL)
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardsn=%s", cardsn);
+	else
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardsn=%s AND cardid=%s", cardsn, cardid);
+
+	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
+	{
+		dbinst->m_res = mysql_store_result(dbinst->m_con);
+
+		*count = mysql_num_rows(dbinst->m_res);
+		*cards = calloc(*count, sizeof(card_st));
+
+		int ndx = 0;
+		while ((dbinst->m_row = mysql_fetch_row(dbinst->m_res)) != NULL)
+		{
+			if (dbinst->m_row[0]) strcpy_s((*cards)[ndx].cardid, sizeof((*cards)[ndx].cardid), dbinst->m_row[0]);
+			if (dbinst->m_row[1]) strcpy_s((*cards)[ndx].cardsn, sizeof((*cards)[ndx].cardsn), dbinst->m_row[1]);
+			if (dbinst->m_row[2]) strcpy_s((*cards)[ndx].utime,  sizeof((*cards)[ndx].utime),  dbinst->m_row[2]);
+			if (dbinst->m_row[3]) strcpy_s((*cards)[ndx].ctime,  sizeof((*cards)[ndx].ctime),  dbinst->m_row[3]);
+			ndx++;
+		}
+		mysql_free_result(dbinst->m_res);
+
+		return _QOK;
+	}
+	else{
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_load_scenes . query error :%s", mysql_error(dbinst->m_con));
+		return _QFAILE;
+	}
 }

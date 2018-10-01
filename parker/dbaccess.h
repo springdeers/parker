@@ -11,6 +11,9 @@
 #include "orderquery.h"
 #include "cardquery.h"
 
+#define _QOK     1
+#define _QFAILE  0
+
 int db_load_scores(mysqlquery_t dbinst,int cardid,scores_t scores);
 
 int db_load_scenes(mysqlquery_t dbinst,int sceneid,sceneinfos_t rslt);
@@ -40,7 +43,7 @@ int db_query_travelername(mysqlquery_t dbinst, int cardid, char **name);
 /*
 *查询未处理订单
 */
-int db_query_unsettled_orders(mysqlquery_t dbinst, char* where,unsettled_order_t ** outorders,int * count);
+int db_query_unsettled_orders(mysqlquery_t dbinst, char* where,unsettled_order_t * outorders,int * count);
 
 /*
 *增加未处理订单
@@ -63,7 +66,7 @@ int db_modify_unsettled_orders(mysqlquery_t dbinst, char* where, char* set);
 /*
 *更改已处理订单
 */
-int db_query_settled_orders(mysqlquery_t dbinst, char* where, settled_order_t ** outorders, int * count);
+int db_query_settled_orders(mysqlquery_t dbinst, char* where, settled_order_t * outorders, int * count);
 
 /*
 *新增已处理订单

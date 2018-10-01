@@ -1,4 +1,4 @@
-#include "queryhelper.h"
+#include "httpquery_helper.h"
 #include <time.h>
 #include "cJSON.h"
 #include "event2/event.h"
@@ -76,26 +76,26 @@ int sqlpartstr_fromquery(struct evkeyvalq*kvq, char*fields[], int fieldcount, ch
 	return 1;
 }
 
-int http_response_wrong(struct evkeyvalq*kvq, struct evhttp_request* req, void* param,char* strerr)
+int http_response_error(struct evkeyvalq*kvq, struct evhttp_request* req, void* param,char* strerr)
 {
 	membuff_t mb = membuff_new(1024);
 
-	struct evbuffer* buf = NULL;
-	
-	while ((buf = evbuffer_new()) == NULL) Sleep(1);
+	struct evbuffer* evbuf = NULL;
 
 	if (req == NULL) return eRoute_failed;
 
 	if (strerr == NULL) strerr = "";
 	membuff_add_printf(mb, "{\"rslt\":\"failed\",\"reason\":\"%s\"}", strerr);
 
-	evbuffer_add_printf(buf, mb->data);
+	while ((evbuf = evbuffer_new()) == NULL) Sleep(1);
+
+	evbuffer_add_printf(evbuf, mb->data);
 	evhttp_add_header(req->output_headers, "Content-Type", "text/json;charset=gb2312");
-	evhttp_send_reply(req, HTTP_OK, "OK", buf);
+	evhttp_send_reply(req, HTTP_OK, "OK", evbuf);
 
 	//clear jobs..
 	membuff_free(mb);
-	evbuffer_free(buf);
+	evbuffer_free(evbuf);
 
 	return eRoute_success;
 }
@@ -114,5 +114,5 @@ int http_response_ok(struct evkeyvalq*kvq, struct evhttp_request* req, void* par
 
 	evbuffer_free(respbuf);
 
-	return 1;
+	return eRoute_success;
 }

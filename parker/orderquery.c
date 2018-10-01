@@ -13,7 +13,7 @@
 #include "cJSON.h"
 #include "tool.h"
 #include "dbaccess.h"
-#include "queryhelper.h"
+#include "httpquery_helper.h"
 
 extern mysqlquery_t sqlobj_venue_db;
 static membuff_t g_membuffer = NULL;
@@ -72,7 +72,7 @@ int route_help(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 			g_helpstr = "help file not exist.";
 	}
 
-	if (req == NULL) return http_response_wrong(kvq, req, param,"请求错误.");
+	if (req == NULL) return http_response_error(kvq, req, param,"请求错误.");
 
 	_assure_clearbuff(g_membuffer, 4096);
 
@@ -246,13 +246,13 @@ static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 
 	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL){
 		if (reqbody) free(reqbody);
-		return  http_response_wrong(kvq, req, param, "参数错误.");
+		return  http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	if ((ordernum = cJSON_GetArraySize(jroot)) == 0)
 	{
 		if (reqbody) free(reqbody);
-		return  http_response_wrong(kvq, req, param, "参数错误.");
+		return  http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	while ((orders = calloc(ordernum, sizeof(unsettled_order_st))) == NULL) Sleep(1);
@@ -267,7 +267,7 @@ static int add_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 			cJSON_Delete(jroot);
 			free(orders);
 			free(reqbody);
-			return  http_response_wrong(kvq, req, param, "参数错误.");
+			return  http_response_error(kvq, req, param, "参数错误.");
 		}
 	}
 
@@ -298,7 +298,7 @@ static int del_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 	const char* orderno  = evhttp_find_header(kvq, _field_orderno);
 	const char* username = evhttp_find_header(kvq, _field_username);
 
-	if (orderno == NULL) return  http_response_wrong(kvq, req, param, "参数错误.");;
+	if (orderno == NULL) return  http_response_error(kvq, req, param, "参数错误.");;
 
 	//////////////////////////////////////////////////////////////////////////
 	deleted = db_delete_unsettled_orders(sqlobj_venue_db, orderno, username);
@@ -328,7 +328,7 @@ static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 
 	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL) {
 		if (reqbody) free(reqbody);
-		return  http_response_wrong(kvq, req, param, "参数错误.");
+		return  http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	cJSON* jwhere = cJSON_GetObjectItem(jroot,"where");
@@ -336,14 +336,14 @@ static int mod_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 
 	if (jset == NULL || jwhere == NULL){
 		free(reqbody); cJSON_Delete(jroot); 
-		return http_response_wrong(kvq, req, param, "参数错误.");;
+		return http_response_error(kvq, req, param, "参数错误.");;
 	}
 	
 	if (!sqlpartstr_fromjson(jwhere, g_fields_unsettled, _arraysize(g_fields_unsettled), "where", where, sizeof(where))||
 		!sqlpartstr_fromjson(jwhere, g_fields_unsettled, _arraysize(g_fields_unsettled), "set", set, sizeof(set)))
 	{ 
 		free(reqbody); cJSON_Delete(jroot); 
-		return http_response_wrong(kvq, req, param, "参数错误.");;
+		return http_response_error(kvq, req, param, "参数错误.");;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -433,13 +433,13 @@ static int add_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 
 	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL){
 		if (reqbody) free(reqbody);
-		return  http_response_wrong(kvq, req, param, "参数错误.");
+		return  http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	if ((ordernum = cJSON_GetArraySize(jroot)) == 0)
 	{
 		free(reqbody);
-		return  http_response_wrong(kvq, req, param, "参数错误.");
+		return  http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	while ((orders = calloc(ordernum, sizeof(settled_order_st))) == NULL) Sleep(1);
@@ -454,7 +454,7 @@ static int add_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 			cJSON_Delete(jroot);
 			free(orders);
 			free(reqbody);
-			return  http_response_wrong(kvq, req, param, "参数错误.");
+			return  http_response_error(kvq, req, param, "参数错误.");
 		}
 	}
 
@@ -484,7 +484,7 @@ static int del_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 	const char* orderno  = evhttp_find_header(kvq, _field_orderno);
 	const char* username = evhttp_find_header(kvq, _field_username);
 
-	if (orderno == NULL) return  http_response_wrong(kvq, req, param, "参数错误.");;
+	if (orderno == NULL) return  http_response_error(kvq, req, param, "参数错误.");;
 
 	//////////////////////////////////////////////////////////////////////////
 	deleted = db_delete_settled_orders(sqlobj_venue_db, orderno, username);
@@ -513,21 +513,21 @@ static int mod_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 
 	if (reqbody == NULL || strlen(reqbody) == 0 || (jroot = cJSON_Parse((const char*)reqbody)) == NULL) {
 		if (reqbody) free(reqbody);
-		return  http_response_wrong(kvq, req, param, "参数错误.");
+		return  http_response_error(kvq, req, param, "参数错误.");
 	}
 
 	cJSON* jwhere = cJSON_GetObjectItem(jroot, "where");
 	cJSON* jset   = cJSON_GetObjectItem(jroot, "set");
 	if (jset == NULL || jwhere == NULL){
 		free(reqbody); cJSON_Delete(jroot);
-		return http_response_wrong(kvq, req, param, "参数错误.");;
+		return http_response_error(kvq, req, param, "参数错误.");;
 	}
 
 	if (!sqlpartstr_fromjson(jwhere, g_fields_settled, _arraysize(g_fields_settled), "where", where, sizeof(where))||
 		!sqlpartstr_fromjson(jwhere, g_fields_settled, _arraysize(g_fields_settled), "set", set, sizeof(set)))
 	{
 		free(reqbody); cJSON_Delete(jroot);
-		return http_response_wrong(kvq, req, param, "参数错误.");;
+		return http_response_error(kvq, req, param, "参数错误.");;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

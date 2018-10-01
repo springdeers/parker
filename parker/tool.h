@@ -116,6 +116,7 @@ weektime_t myweektime(weektime_t wt);
 mytime_t   mylocaltime(mytime_t t);
 mytime_t   localtime2mytime(struct tm* src, mytime_t dest);
 int        str2hms(char* str, int* hour, int* minute, int* second);
+void       current_time_str(char buffer[32]);
 
 #define _DAYSECONDS(hour,minute,second) (hour*3600+minute*60+second)
 #define _SOW(day,hour,minute,second) (day*86400+hour*3600 + minute * 60 + second)
@@ -133,5 +134,19 @@ void    vec_clear(vec_t);
 void    vec_free(vec_t);
 void*   vec_data(vec_t, int);
 
+#define _free1(_pvoid1){\
+free(_pvoid1); _pvoid1 = NULL;\
+}
+
+#define _free2(_pvoid1,_pvoid2){\
+free(_pvoid1); _pvoid1 = NULL;\
+free(_pvoid2); _pvoid2 = NULL;\
+}
+
+#define _free3(_pvoid1,_pvoid2,_pvoid3){\
+free(_pvoid1); _pvoid1 = NULL;\
+free(_pvoid2); _pvoid2 = NULL;\
+free(_pvoid3); _pvoid3 = NULL;\
+}
 
 #endif
