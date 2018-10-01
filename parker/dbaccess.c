@@ -562,12 +562,13 @@ int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_s
 	return rt;
 }
 
-
 //////////////////////////////////////////////////////////////////////////
-#define _unsettled_orders_fields_cnt 11
-#define _unsettled_orders_fields       "ordertime,orderno,username,age,identitycard,phone,workunit,email,team_name,group_name,leader"
-#define _unsettled_orders_fields_para  "'%s','%s','%s',%d,'%s','%s','%s','%s','%s','%s','%s'"
-#define _unsettled_orders_values(_st_) _st_->orderdate,_st_->orderno,_st_->username,_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader
+#define _unsettled_orders_fields_cnt        11
+#define _unsettled_orders_fields            "ordertime,orderno,username,age,identitycard,phone,workunit,email,team_name,group_name,leader"
+#define _unsettled_orders_fields_para       "'%s','%s','%s',%d,'%s','%s','%s','%s','%s','%s','%s'"
+#define _unsettled_orders_values(_st_)      _st_->orderdate,_st_->orderno,_st_->username,_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader
+#define _unsettled_orders_fields_comma      "%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s"
+#define _unsettled_orders_values_ptr(_st_)  _st_->orderdate,_st_->orderno,_st_->username,&_st_->age,_st_->cardid,_st_->telephone,_st_->workunit,_st_->email,_st_->team,_st_->group,_st_->teamleader
 
 int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_t * outorders, int * count)
 {
@@ -590,22 +591,36 @@ int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_
 		*count = mysql_num_rows(dbinst->m_res);
 		*outorders = calloc(*count, sizeof(unsettled_order_st));
 
+		membuff_t mb = membuff_new(2048);
 		int ndx = 0;
 		while ((dbinst->m_row = mysql_fetch_row(dbinst->m_res)) != NULL)
 		{
-			if (dbinst->m_row[0]) strcpy_s((*outorders)[ndx].orderdate, sizeof((*outorders)[ndx].orderdate),	dbinst->m_row[0]);
-			if (dbinst->m_row[1]) strcpy_s((*outorders)[ndx].orderno,   sizeof((*outorders)[ndx].orderno),		dbinst->m_row[1]);
-			if (dbinst->m_row[2]) strcpy_s((*outorders)[ndx].username,  sizeof((*outorders)[ndx].username),		dbinst->m_row[2]);
-			if (dbinst->m_row[3]) (*outorders)[ndx].age,s_atoi(dbinst->m_row[3]);
-			if (dbinst->m_row[4]) strcpy_s((*outorders)[ndx].cardid,    sizeof((*outorders)[ndx].cardid),		dbinst->m_row[4]);
-			if (dbinst->m_row[5]) strcpy_s((*outorders)[ndx].telephone, sizeof((*outorders)[ndx].telephone),	dbinst->m_row[5]);
-			if (dbinst->m_row[6]) strcpy_s((*outorders)[ndx].workunit,  sizeof((*outorders)[ndx].workunit),		dbinst->m_row[6]);
-			if (dbinst->m_row[7]) strcpy_s((*outorders)[ndx].email,     sizeof((*outorders)[ndx].email),		dbinst->m_row[7]);
-			if (dbinst->m_row[8]) strcpy_s((*outorders)[ndx].team,      sizeof((*outorders)[ndx].team),			dbinst->m_row[8]);
-			if (dbinst->m_row[9]) strcpy_s((*outorders)[ndx].group,     sizeof((*outorders)[ndx].group),		dbinst->m_row[9]);
-			if (dbinst->m_row[10]) strcpy_s((*outorders)[ndx].teamleader, sizeof((*outorders)[ndx].teamleader), dbinst->m_row[10]);
+			//try this instead...
+			for (int c = 0; c < _unsettled_orders_fields_cnt; c++){
+				if (dbinst->m_row[c])
+					membuff_add_printf(mb, "%s,", dbinst->m_row[c]);
+				else
+					membuff_add_printf(mb, "%s,", "");
+			}
+			sscanf(mb->data, _unsettled_orders_fields_comma, _unsettled_orders_values_ptr((&(*outorders)[ndx])));
+			//end try this instead...
+
+// 			if (dbinst->m_row[0]) strcpy_s((*outorders)[ndx].orderdate, sizeof((*outorders)[ndx].orderdate),	dbinst->m_row[0]);
+// 			if (dbinst->m_row[1]) strcpy_s((*outorders)[ndx].orderno,   sizeof((*outorders)[ndx].orderno),		dbinst->m_row[1]);
+// 			if (dbinst->m_row[2]) strcpy_s((*outorders)[ndx].username,  sizeof((*outorders)[ndx].username),		dbinst->m_row[2]);
+// 			if (dbinst->m_row[3]) (*outorders)[ndx].age,s_atoi(dbinst->m_row[3]);
+// 			if (dbinst->m_row[4]) strcpy_s((*outorders)[ndx].cardid,    sizeof((*outorders)[ndx].cardid),		dbinst->m_row[4]);
+// 			if (dbinst->m_row[5]) strcpy_s((*outorders)[ndx].telephone, sizeof((*outorders)[ndx].telephone),	dbinst->m_row[5]);
+// 			if (dbinst->m_row[6]) strcpy_s((*outorders)[ndx].workunit,  sizeof((*outorders)[ndx].workunit),		dbinst->m_row[6]);
+// 			if (dbinst->m_row[7]) strcpy_s((*outorders)[ndx].email,     sizeof((*outorders)[ndx].email),		dbinst->m_row[7]);
+// 			if (dbinst->m_row[8]) strcpy_s((*outorders)[ndx].team,      sizeof((*outorders)[ndx].team),			dbinst->m_row[8]);
+// 			if (dbinst->m_row[9]) strcpy_s((*outorders)[ndx].group,     sizeof((*outorders)[ndx].group),		dbinst->m_row[9]);
+// 			if (dbinst->m_row[10]) strcpy_s((*outorders)[ndx].teamleader, sizeof((*outorders)[ndx].teamleader), dbinst->m_row[10]);
 			ndx++;
 		}
+
+		membuff_free(mb);
+
 		mysql_free_result(dbinst->m_res);
 
 		return _QOK;
