@@ -568,7 +568,7 @@ int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_s
 	return rt;
 }
 
-//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////可以合并到一个结构体中...
 #define _unsettled_orders_fields_cnt        11
 #define _unsettled_orders_fields            "ordertime,orderno,username,age,identitycard,phone,workunit,email,team_name,group_name,leader"
 #define _unsettled_orders_fields_para       "'%s','%s','%s',%d,'%s','%s','%s','%s','%s','%s','%s'"
@@ -606,7 +606,7 @@ int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_
 				if (dbinst->m_row[c])
 					membuff_add_printf(mb, "%s,", dbinst->m_row[c]);
 				else
-					membuff_add_printf(mb, "%s,", "");
+					membuff_add_printf(mb, "%s,", "");	
 			}
 			sscanf(mb->data, _unsettled_orders_fields_comma, _unsettled_orders_values_ptr((&(*outorders)[ndx])));
 			//end try this instead...
@@ -642,13 +642,14 @@ int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_
 
 int db_save_unsettled_orders(mysqlquery_t dbinst, unsettled_order_t orders, int count)
 {
-	membuff_t sql = membuff_new(8*1024);
+	membuff_t sql       = membuff_new(8*1024);
 	membuff_t mbuffdata = membuff_new(4*1024);
 
 	if (dbinst == NULL || orders == NULL || count < 1) return _QFAILE;
 	
 	for (int i = 0; i < count; i++)
 		membuff_add_printf(mbuffdata, "("_unsettled_orders_fields_para"),", _unsettled_orders_values((&orders[i])));
+	
 	membuff_trim(mbuffdata, ",");
 	membuff_addstr(mbuffdata, ";", 2);
 
@@ -690,7 +691,6 @@ int db_delete_unsettled_orders(mysqlquery_t dbinst, char* orderno, char* usernam
 		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "DELETE FROM tbUnsettledOrder"\
 			" where orderno=%s AND username=%s", orderno,username);
 	}
-
 
 	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
 	{

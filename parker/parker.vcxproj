@@ -172,6 +172,7 @@
     <ClInclude Include="cutil\util.h" />
     <ClInclude Include="cutil\xhash.h" />
     <ClInclude Include="datatransfer.h" />
+    <ClInclude Include="datatransfers.h" />
     <ClInclude Include="dbaccess.h" />
     <ClInclude Include="job.h" />
     <ClInclude Include="jsonconf.h" />
@@ -234,6 +235,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="datatransfer.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="datatransfers.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="dbaccess.c">

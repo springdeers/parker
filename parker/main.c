@@ -28,16 +28,6 @@ typedef struct _tick_st{
 	struct event* timer;
 }tick_st,*tick_t;
 
-
-// 为mysql_querycallback第三个参数设计
-//typedef struct _db_info{
-//	char *	db_ip;
-//	int		db_port;
-//	char *	db_username;
-//	char *	db_userpwd;
-//	char *  db_name;
-//}db_info, *db_info_t;
-
 int  start_httpd(const char* ip, int port, void (*cb)(struct evhttp_request *, void *), void *arg);
 void httpd_callback(struct evhttp_request* req, void* arg);
 void mysql_querycallback(void* conn,int code);
@@ -53,8 +43,7 @@ void init_winsocklib()
 
 int _tmain(int argc, _TCHAR* argv[])
 {	
-	BOOL bconf = setup_config("parker.json",&g_conf);
-	if (!bconf) {
+	if (!setup_config("parker.json", &g_conf)) {
 		printf("err : load ./parker.json file failed.  exit!\n");
 		exit(1);
 	}
@@ -74,15 +63,18 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	init_winsocklib();
 	
-	sqlobj_venue_db = mysqldb_connect_init(g_conf.venue_db_ip, g_conf.venue_db_port, g_conf.venue_db_username, g_conf.venue_db_userpwd, g_conf.venue_db_name, mysql_querycallback);    	
+	sqlobj_venue_db    = mysqldb_connect_init(g_conf.venue_db_ip, g_conf.venue_db_port, g_conf.venue_db_username, g_conf.venue_db_userpwd, g_conf.venue_db_name, mysql_querycallback);    	
 	sqlobj_userinfo_db = mysqldb_connect_init(g_conf.userinfo_db_ip, g_conf.userinfo_db_port, g_conf.userinfo_db_username, g_conf.userinfo_db_userpwd, g_conf.userinfo_db_name, mysql_querycallback);
 	
+	//开启后台的数据转移任务.
+	transfers_startup(&g_conf);
+
 	router_setup();
 	//启动服务在地址 127.0.0.1:9000 上
 	start_httpd("0.0.0.0",g_conf.svrport , httpd_callback, NULL);
 
-	while (1);
-
+	//while (1){ Sleep(1); }
+	transfers_free();
 #ifdef WIN32
 	WSACleanup();
 #endif
