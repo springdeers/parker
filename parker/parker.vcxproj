@@ -183,6 +183,7 @@
     <ClInclude Include="mysqldb.h" />
     <ClInclude Include="orderquery.h" />
     <ClInclude Include="httpquery_helper.h" />
+    <ClInclude Include="posrslt.h" />
     <ClInclude Include="route.h" />
     <ClInclude Include="scenerslt.h" />
     <ClInclude Include="scorerslt.h" />
@@ -269,6 +270,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="httpquery_helper.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="posrslt.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="route.c">
