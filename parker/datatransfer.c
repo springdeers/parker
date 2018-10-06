@@ -1,5 +1,13 @@
 #include "datatransfer.h"
 #include "dbaccess.h"
+#include "event2/buffer.h"
+#include "membuff.h"
+#include "posrslt.h"
+
+extern mysqlquery_t sqlobj_venue_db;
+extern mysqlquery_t sqlobj_userinfo_db;
+extern log_t g_log;
+static membuff_t g_membuffer_score = NULL;
 
 #define abstime_set(__time_,__timeout_ms_)\
 {\
@@ -7,11 +15,120 @@
 	__time_.tv_nsec = (__timeout_ms_ % 1000) * 1000000;\
 }
 
+
+// 向tbHistoricExperience表中转移相关数据
+static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
+{
+	char *ordertime, *scoretime, *username, *phoneno, *openid;
+
+	// 1. 计算并生成成绩json
+	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
+
+	// 获取所有场景个数与学分总和
+	if (-1 == db_query_credits(sqlobj_venue_db, &scores.totalscenes, &scores.totalcredit))
+	{
+		printf("db_query_credits failed.\n");
+		return -1;
+	}
+
+	if (scores.totalcredit == 0)
+	{		
+		printf("error: scores.totalcredit == 0.\n");
+		return -1;
+	}
+
+	// 获取未体验场景，构造出json串
+	// json串格式： {"remains":[{"name":"烟雾逃生"},{"name":"汽车落水"},{"name":"地震小屋"}]}
+	if (-1 == db_query_remains(sqlobj_venue_db, &scores))
+	{
+		printf("db_query_credits failed.\n");
+		return -1;
+	}
+
+	// 获取游客姓名
+	if (-1 == db_query_travelername(sqlobj_userinfo_db, atoi(cardid), &username))
+	{
+		printf("db_query_travelrname failed.\n");
+		return -1;
+	}
+
+	finalscore_st finalscore = { 0 };
+	memcpy(finalscore.name, username, strlen(username) + 1);
+	free(username);
+
+	get_finalscore(&scores, &finalscore);
+
+	_assure_clearbuff(g_membuffer_score, 4096);
+
+	membuff_add_printf(g_membuffer_score, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remainsobj\":%s}",
+		finalscore.name,
+		cardid,
+		"",
+		finalscore.finalscore,
+		finalscore.credit_point,
+		finalscore.grade_point,
+		finalscore.scoreclass,
+		finalscore.suggestion,
+		finalscore.rmnscenes
+		);
+
+	membuff_addchar(g_membuffer_score, '\0');
+
+	// 2. 获取并生成轨迹json
+	positions_st positions = { 0 };
+	db_load_positions(sqlobj_userinfo_db, atoi(cardid), &positions);
+	// to be continued ...
+	// 根据positions，生成轨迹json串
+
+
+
+	
+	// 3. 获取其他要素
+
+
+	// 4. 存入venue_db库的tbHistoricExperience表中
+
+
+
+}
+
+static int tbVisitorScore_transfer(char * cardid, scores_t scores)
+{
+	if (NULL == scores)
+	{
+		return -1;
+	}
+}
+
+static int tb_VisitorActivity_transfer(char * cardidi, visitrslt_t activities)
+{
+	if (NULL == activities)
+	{
+		return -1;
+	}
+}
+
 void dojob(job_t job)
 {
 	if (job == NULL) return;
 
+	char *cardid = job->cardid;
+	scores_st scores;
+	visitrslt_st activities[128];
+
+	// 1. 将user_info_db库中的tbvisitoractivity表相关内容转移到venue_db库中的tbvisitoractivity表内
+	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		
+	tbVisitorScore_transfer(cardid, &scores);
+
+	// 2. 将user_info_db库中的tbvisitorscore表相关内容转移到venue_db库中的tbvisitorscore表内
+	db_load_visitor_activity(sqlobj_venue_db, atoi(cardid), activities, sizeof(activities) / sizeof(activities[0]));
+	tb_VisitorActivity_transfer(cardid, activities);
+
+	// 3. 向venue_db库：tbHistoricExperience表中插入数据
+	tbHistoricExperience_transfer(cardid,scores);
 }
+
+
 
 static void* _worker(void* param)
 {
