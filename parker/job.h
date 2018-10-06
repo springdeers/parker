@@ -3,8 +3,6 @@
 
 typedef struct _job_st
 {
-	int i;//sample
-	int m;
-	int k;
+	char *cardid;		
 }job_st, *job_t;
 #endif

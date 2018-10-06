@@ -17,10 +17,12 @@
 #include "struct.h"
 #include "mysqldb.h"
 #include "dbaccess.h"
+#include "datatransfer.h"
 
 extern mysqlquery_t sqlobj_venue_db;
 extern mysqlquery_t sqlobj_userinfo_db;
 static membuff_t g_membuffer = NULL;
+extern transfer_t g_transfer;
 
 #define NULL 0
 
@@ -246,43 +248,13 @@ int user_score(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 {
-	int i = 0, score_scs_freeflag = 0;
-	scores_st scores;
 	struct evbuffer* buf = NULL;
 	const char* cardid = evhttp_find_header(kvq, "cardid");
 	const char* comid = evhttp_find_header(kvq, "comid");		// 此处无用，只是为了向printsvr转发时方便
-	//const char* queryonly = evhttp_find_header(kvq, "queryonly");
 
 	while ((buf = evbuffer_new()) == NULL)Sleep(1);
 
 	if (cardid == NULL || req == NULL || strlen(cardid) == 0) { evbuffer_free(buf); return eRoute_failed; }
-
-	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		// 将cardid对应的所有成绩记录全部取出来，放到scores结构体中
-	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
-
-	// 获取所有场景个数与学分总和
-	if (-1 == db_query_credits(sqlobj_venue_db, &scores.totalscenes, &scores.totalcredit))
-	{
-		evbuffer_free(buf);
-		printf("db_query_credits failed.\n");
-		return -1;
-	}
-
-	if (scores.totalcredit == 0)
-	{
-		evbuffer_free(buf);
-		printf("error: scores.totalcredit == 0.\n");
-		return -1;
-	}
-
-	// 获取未体验场景，构造出json串
-	// json串格式： {"remains":[{"name":"烟雾逃生"},{"name":"汽车落水"},{"name":"地震小屋"}]}
-	if (-1 == db_query_remains(sqlobj_venue_db, &scores))
-	{
-		evbuffer_free(buf);
-		printf("db_query_credits failed.\n");
-		return -1;
-	}
 
 	char* name = NULL;
 	if (-1 == db_query_travelername(sqlobj_userinfo_db, atoi(cardid), &name))
@@ -292,31 +264,15 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 		return -1;
 	}
 
-	// 最重要的改动，最新成绩算法
-	finalscore_st finalscore = { 0 };
-	memcpy(finalscore.name, name, strlen(name) + 1);
-	free(name);
-
-	get_finalscore(&scores, &finalscore);
-
 	_assure_clearbuff(g_membuffer, 4096);
-	
-	/*membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"score\",\"code\":\"0\",\"cardid\":\"%s\",\"comid\":\"%s\",\"finalscore\":\"%.1f\",\"credit_point\":\"%.1f\",\"grade_point\":\"%.1f\",\"class\":\"%s\",\"suggestion\":\"%s\",\"remainsobj\":%s}",
-		scores.name,
-		cardid,
-		comid,
-		finalscore.finalscore,
-		finalscore.credit_point,
-		finalscore.grade_point,
-		finalscore.scoreclass,
-		finalscore.suggestion,
-		finalscore.rmnscenes
-		);*/
+
 	membuff_add_printf(g_membuffer, "{\"name\":\"%s\",\"type\":\"backcard\",\"rslt\":\"ok\",\"cardid\":\"%s\",\"comid\":\"%s\",\"error\":\"\"}",
-		finalscore.name,
+		name,
 		cardid,
 		comid
 		);
+
+	free(name);
 
 	membuff_addchar(g_membuffer, '\0');
 
@@ -328,13 +284,11 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	evbuffer_free(buf);
 
-	scores_freeitems(&scores);
+	// 将要退卡的cardid加入待处理队列中
+	job_st job;
+	job.cardid = cardid;
+	transfer_postAjob(g_transfer,job);
 
-	/*if (queryonly && strcmp(queryonly, "true") == 0)
-	return eRoute_success;
-
-	db_clear_scores(sqlobj_venue_db, atoi(cardid));
-	*/
 	return eRoute_success;
 }
 
