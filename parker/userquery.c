@@ -286,7 +286,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 
 	// 将要退卡的cardid加入待处理队列中
 	job_st job;
-	job.cardid = cardid;
+	memcpy(job.cardid, cardid, sizeof(cardid));
 	transfer_postAjob(g_transfer,job);
 
 	return eRoute_success;

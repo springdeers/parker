@@ -15,7 +15,8 @@ static membuff_t g_membuffer_score = NULL;
 	__time_.tv_nsec = (__timeout_ms_ % 1000) * 1000000;\
 }
 
-static void dojob(job_t job)
+static void dojob(job_t job);
+
 // 向tbHistoricExperience表中转移相关数据
 static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
 {
