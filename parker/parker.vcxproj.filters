@@ -117,7 +117,10 @@
     <ClInclude Include="tool.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="queryhelper.h">
+    <ClInclude Include="httpquery_helper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="posrslt.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -206,7 +209,10 @@
     <ClCompile Include="tool.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="queryhelper.c">
+    <ClCompile Include="httpquery_helper.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="posrslt.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

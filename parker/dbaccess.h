@@ -10,6 +10,7 @@
 #include "json/cJSON.h"
 #include "orderquery.h"
 #include "cardquery.h"
+#include "posrslt.h"
 
 #define _QOK     1
 #define _QFAILE  0
@@ -38,6 +39,7 @@ int db_load_scores_scs(mysqlquery_t dbinst,scores_scs_t scores);
 int db_query_remains(mysqlquery_t dbinst, scores_t scores);
 int db_query_credits(mysqlquery_t dbinst, int* cnt, int* credits);
 int db_query_travelername(mysqlquery_t dbinst, int cardid, char **name);
+int db_load_positions(mysqlquery_t dbinst, int cardid, positions_t pos);
 
 //////////////////////////////////////////////////////////////////////////
 /*

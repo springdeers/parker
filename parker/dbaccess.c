@@ -3,6 +3,7 @@
 #include "tool.h"
 #include "membuff.h"
 
+
 extern mysqlquery_t sqlobj_venue_db;
 
 
@@ -210,6 +211,11 @@ int db_load_scores(mysqlquery_t dbinst,int cardid,scores_t scores)
 	}
 
 	return rt;
+}
+
+int db_load_positions(mysqlquery_t dbinst, int cardid, positions_t pos)
+{
+	// to be continued ...
 }
 
 

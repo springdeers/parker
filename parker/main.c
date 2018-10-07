@@ -21,6 +21,7 @@ mysqlquery_t sqlobj_venue_db = NULL;
 mysqlquery_t sqlobj_userinfo_db = NULL;
 config_st    g_conf;
 log_t        g_log;
+transfer_t   g_transfer = NULL;
 
 typedef struct _tick_st{
 	TIMEVAL tv;
@@ -53,6 +54,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	if(!g_log){
 		g_log = log_new(log_STDOUT,NULL,NULL);
 		printf("open logfile failed. log goto stdout instead.\n");
+	}
+
+	g_transfer = transfer_new();	// 历史数据转移
+	if (!g_transfer)
+	{
+		printf("err : transfer_new() failed.  exit!\n");
+		exit(1);
 	}
 
 	init_winsocklib();
