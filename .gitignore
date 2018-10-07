@@ -11,3 +11,5 @@
 *.ipch
 *.obj
 *.idb
+*.orig
+
