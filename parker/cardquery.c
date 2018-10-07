@@ -190,7 +190,7 @@ int card_get(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 				               cards[i].cardid, 
 							   cards->cardsn, 
 							   cards->utime, 
-							   cards->ctime);										  		
+							   cards->ctime);	//should be "".									  		
 		
 		membuff_trim(g_membuffer, ",");
 		membuff_addchar(g_membuffer,'\0');
