@@ -93,6 +93,7 @@ static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
 
 }
 
+// 将user_info_db中临时存储的tbVisitorScore表中内容转移到venue_db库中的tbVisitorScore表中
 static int tbVisitorScore_transfer(char * cardid, scores_t scores)
 {
 	if (NULL == scores)
@@ -101,6 +102,7 @@ static int tbVisitorScore_transfer(char * cardid, scores_t scores)
 	}
 }
 
+// 将user_info_db中临时存储的tbVisitorActivity表中内容转移到venue_db库中的tbVisitorActivity表中
 static int tb_VisitorActivity_transfer(char * cardidi, visitrslt_t activities)
 {
 	if (NULL == activities)
@@ -116,6 +118,8 @@ void dojob(job_t job)
 	char *cardid = job->cardid;
 	scores_st scores;
 	visitrslt_st activities[128];
+
+	// 如果在scene_server存库时同时存了两份到不同的库中，则1和2这两个步骤可以在此处略去
 
 	// 1. 将user_info_db库中的tbvisitoractivity表相关内容转移到venue_db库中的tbvisitoractivity表内
 	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		
