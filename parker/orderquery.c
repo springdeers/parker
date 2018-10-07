@@ -193,7 +193,7 @@ static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 	int  num = 0;
 	char where[256] = {0};
 	int  printn = 0;
-	unsettled_order_t * orders = NULL;
+	unsettled_order_t orders = NULL;
 	int  count = 0;
 	
 	sqlpartstr_fromquery(kvq, g_fields_unsettled, _arraysize(g_fields_unsettled), "where", where, sizeof(where));
@@ -207,17 +207,17 @@ static int get_unsettled_order(struct evkeyvalq*kvq, struct evhttp_request* req,
 		for (int i = 0; i < count; i++){
 			membuff_add_printf(g_membuffer, "{\"orderdate\":\"%s\",\"orderno\":\"%s\",\"username\":\"%s\",\"age\":\"%d\",\"cardid\":\"%s\",\"telephone\":\"%s\",\"workunit\":\"%s\",\
 											  \"email\":\"%s\",\"team\":\"%s\",\"group\":\"%s\",\"teamleader\":\"%s\"},",
-											  orders[i]->orderdate,
-											  orders[i]->orderno,
-											  orders[i]->username,
-											  orders[i]->age,
-											  orders[i]->cardid,
-											  orders[i]->telephone,
-											  orders[i]->workunit,
-											  orders[i]->email,
-											  orders[i]->team,
-											  orders[i]->group,
-											  orders[i]->teamleader);
+											  orders[i].orderdate,
+											  orders[i].orderno,
+											  orders[i].username,
+											  orders[i].age,
+											  orders[i].cardid,
+											  orders[i].telephone,
+											  orders[i].workunit,
+											  orders[i].email,
+											  orders[i].team,
+											  orders[i].group,
+											  orders[i].teamleader);
 		}
 		membuff_trim(g_membuffer,",");
 		membuff_addchar(g_membuffer, ']');
@@ -375,7 +375,7 @@ static int get_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 	int num = 0;
 	char where[256] = { 0 };
 	int  printn = 0;
-	settled_order_t * orders = NULL;
+	settled_order_t orders = NULL;
 	int  count = 0;
 
 	sqlpartstr_fromquery(kvq, g_fields_settled, _arraysize(g_fields_settled), "where", where, sizeof(where));
@@ -390,19 +390,19 @@ static int get_settled_order(struct evkeyvalq*kvq, struct evhttp_request* req, v
 			membuff_add_printf(g_membuffer, "{\"orderdate\":\"%s\",\"orderno\":\"%s\",\"username\":\"%s\",\"age\":\"%d\",\"cardid\":\"%s\",\"telephone\":\"%s\",\"workunit\":\"%s\",\
 											  \"email\":\"%s\",\"team\":\"%s\",\"group\":\"%s\",\"teamleader\":\"%s\",\
 										      \"operator\":\"%s\",\"opertime\":\"%s\"},",
-											  orders[i]->orderdate,
-											  orders[i]->orderno,
-											  orders[i]->username,
-											  orders[i]->age,
-											  orders[i]->cardid,
-											  orders[i]->telephone,
-											  orders[i]->workunit,
-											  orders[i]->email,
-											  orders[i]->team,
-											  orders[i]->group,
-											  orders[i]->teamleader,
-											  orders[i]->operator,
-											  orders[i]->opertime);
+											  orders[i].orderdate,
+											  orders[i].orderno,
+											  orders[i].username,
+											  orders[i].age,
+											  orders[i].cardid,
+											  orders[i].telephone,
+											  orders[i].workunit,
+											  orders[i].email,
+											  orders[i].team,
+											  orders[i].group,
+											  orders[i].teamleader,
+											  orders[i].operator,
+											  orders[i].opertime);
 		}
 		membuff_trim(g_membuffer, ",");
 		membuff_addchar(g_membuffer, ']');
