@@ -42,6 +42,8 @@ void init_winsocklib()
 
 int _tmain(int argc, _TCHAR* argv[])
 {	
+	router_t router = NULL;
+
 	if (!setup_config("parker.json", &g_conf)) {
 		printf("err : load ./parker.json file failed.  exit!\n");
 		exit(1);
@@ -61,12 +63,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	//开启后台的数据转移任务.
 	transfers_startup(&g_conf);
 
-	router_setup();
+	router = router_setup();
 	//启动服务在地址 127.0.0.1:9000 上
 	start_httpd("0.0.0.0",g_conf.svrport , httpd_callback, NULL);
 
 	//while (1){ Sleep(1); }
 	transfers_free();
+
+	router_free(router);
+
 #ifdef WIN32
 	WSACleanup();
 #endif
