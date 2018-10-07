@@ -70,6 +70,8 @@ transfer_t transfer_init(transfer_t transfer)
 	pthread_cond_init(&transfer->_cond, NULL);
 
 	pthread_mutex_init(&transfer->_mt_signal, NULL);
+
+	return transfer;
 }
 
 transfer_t transfer_clear(transfer_t transfer)
@@ -85,6 +87,8 @@ transfer_t transfer_clear(transfer_t transfer)
 	pthread_mutex_destroy(&transfer->_mt_signal);
 
 	pthread_cond_destroy(&transfer->_cond);
+
+	return transfer;
 }
 
 transfer_t transfer_new()
