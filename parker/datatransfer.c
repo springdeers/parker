@@ -133,8 +133,6 @@ void dojob(job_t job)
 	tbHistoricExperience_transfer(cardid,scores);
 }
 
-
-
 static void* _worker(void* param)
 {
 	transfer_t transfer = (transfer_t)param;
@@ -281,5 +279,5 @@ int  transfer_jobs_remain_cnt(transfer_t transfer)
 {
 	if (transfer == 0) return 0;
 
-	return jqueue_size(transfer->_workingqueue);
+	return jqueue_size(transfer->_workingqueue) + jqueue_size(transfer->_workqueue);
 }
