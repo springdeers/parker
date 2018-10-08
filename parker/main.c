@@ -16,8 +16,9 @@
 #include "orderquery.h"
 #include "userquery.h"
 #include "datatransfers.h"
+#include "tool.h"
 
-mysqlquery_t sqlobj_venue_db = NULL;
+mysqlquery_t sqlobj_venue_db    = NULL;
 mysqlquery_t sqlobj_userinfo_db = NULL;
 config_st    g_conf;
 log_t        g_log;
@@ -136,16 +137,11 @@ void httpd_callback(struct evhttp_request* req, void* arg)
 	route(router_object(),path,&kvq,req,arg);
 }
 
-#define _strftime_ymdhms(timestr){\
-	time_t now =time(NULL);\
-	strftime(timestr,sizeof(timestr),"%Y-%m-%d %H:%M:%S",localtime(&now));\
-}
-
 void mysql_querycallback(void* conn,int code)
 {
 	time_t now = time(NULL);
 	
-	if(code == eSqlQueryerr_errorquery||code == eSqlQueryerr_errorping){		
+	if(code == eSqlQueryerr_errorquery||code == eSqlQueryerr_errorping){
 		mysqlquery_t conn = NULL;
 
 		/*mysqldb_close(sqlobj_venue_db);
