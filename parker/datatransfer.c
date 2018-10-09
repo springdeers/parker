@@ -151,9 +151,9 @@ static void* _worker(void* param)
 		
 		while (jqueue_size(transfer->_workqueue) == 0 && wait == 0 )//predicate in critical area..
 		{
-			abstime_set(abstime, 100);//未来1000ms时刻。
+			abstime_set(abstime, 300);//未来300ms时刻。
 			
-			wait = pthread_cond_timedwait(&transfer->_cond, &transfer->_mt_signal, &abstime);//注意,该函数等待的时间不够精确。
+			wait = pthread_cond_timedwait(&transfer->_cond, &transfer->_mt_signal, &abstime);
 		}
 
 		if (wait != 0 && wait != ETIMEDOUT) {//error
