@@ -26,7 +26,6 @@ static int tbHistoricExperience_transfer(int cardid, scores_st scores)
 	char *ordertime, *scoretime, *username, *phoneno, *openid;
 
 	// 1. 计算并生成成绩json
-	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
 
 	// 获取所有场景个数与学分总和
 	if (-1 == db_query_credits(sqlobj_venue_db, &scores.totalscenes, &scores.totalcredit))
@@ -126,6 +125,7 @@ static int stage_two_dojob(int cardid)
 	/*********** 第一步，相关数据提取整合与转移 ************/
 	scores_st scores;
 	db_load_scores(sqlobj_venue_db, cardid, &scores);
+	scores_shrink(&scores);			// 对scores结构体进行精简，同一个场景只出唯一的成绩（取最大值）
 
 	// 1. 向venue_db.tbAnalyse表中插入数据，供统计分析
 	// 数据源自user_info_db.tbTravelrScore表
