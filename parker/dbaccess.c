@@ -494,11 +494,106 @@ int db_clear_visitor_activtiy(mysqlquery_t dbinst,int cardid)
 		if(dbinst->_cb)
 			dbinst->_cb(dbinst,eSqlQueryerr_errorping);
 
-		printf("db_load_scenes . query error :%s",mysql_error(dbinst->m_con));			
+		printf("db_clear_visitor_activtiy . query error :%s",mysql_error(dbinst->m_con));			
 	}
 
 	return rt;
 }
+
+
+int db_clear_travelerscores(mysqlquery_t dbinst, int cardid)
+{
+	char sql[512] = { 0 };
+	int  rt = 1;
+
+	if (dbinst == NULL || cardid < 0)
+		return rt;
+
+	sprintf(sql, "DELETE FROM tbtravelerscore \
+				 				 				 WHERE _cardid=%d", cardid);
+
+	rt = mysql_real_query(dbinst->m_con, sql, strlen(sql));
+
+	if (rt != 0){
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_clear_travelerscores . query error :%s", mysql_error(dbinst->m_con));
+	}
+
+	return rt;
+}
+
+int db_clear_visitor_tagpos(mysqlquery_t dbinst, int cardid)
+{
+	char sql[512] = { 0 };
+	int  rt = 1;
+	int printn = 0;
+
+	if (dbinst == NULL || cardid < 0)
+		return rt;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn - 1, "DELETE FROM tbtagpos where tagid=%d", cardid);
+
+	rt = mysql_real_query(dbinst->m_con, sql, strlen(sql));
+
+	if (rt != 0){
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_clear_visitor_tagpos . query error :%s", mysql_error(dbinst->m_con));
+	}
+
+	return rt;
+}
+
+
+int db_clear_traveler(mysqlquery_t dbinst, int cardid)
+{
+	char sql[512] = { 0 };
+	int  rt = 1;
+	int printn = 0;
+
+	if (dbinst == NULL || cardid < 0)
+		return rt;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn - 1, "DELETE FROM tbtraveler where userid=%d", cardid);
+
+	rt = mysql_real_query(dbinst->m_con, sql, strlen(sql));
+
+	if (rt != 0){
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_clear_traveler . query error :%s", mysql_error(dbinst->m_con));
+	}
+
+	return rt;
+}
+
+int db_clear_tagmapping(mysqlquery_t dbinst, int cardid)
+{
+	char sql[512] = { 0 };
+	int  rt = 1;
+	int printn = 0;
+
+	if (dbinst == NULL || cardid < 0)
+		return rt;
+
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn - 1, "DELETE FROM tbtagmapping where userid=%d", cardid);
+
+	rt = mysql_real_query(dbinst->m_con, sql, strlen(sql));
+
+	if (rt != 0){
+		if (dbinst->_cb)
+			dbinst->_cb(dbinst, eSqlQueryerr_errorping);
+
+		printf("db_clear_tagmapping . query error :%s", mysql_error(dbinst->m_con));
+	}
+
+	return rt;
+}
+
 
 int db_load_statistic_scene_scores(mysqlquery_t dbinst,int sceneid,scoredeploy_st*out)
 {

@@ -18,7 +18,7 @@ static membuff_t g_membuffer_score = NULL;
 static void dojob(job_t job);
 
 // 向tbHistoricExperience表中转移相关数据
-static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
+static int tbHistoricExperience_transfer(int cardid, scores_st scores)
 {
 	char *ordertime, *scoretime, *username, *phoneno, *openid;
 
@@ -47,7 +47,7 @@ static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
 	}
 
 	// 获取游客姓名
-	if (-1 == db_query_travelername(sqlobj_userinfo_db, atoi(cardid), &username))
+	if (-1 == db_query_travelername(sqlobj_userinfo_db,cardid, &username))
 	{
 		printf("db_query_travelrname failed.\n");
 		return -1;
@@ -77,7 +77,7 @@ static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
 
 	// 2. 获取并生成轨迹json
 	positions_st positions = { 0 };
-	db_load_positions(sqlobj_userinfo_db, atoi(cardid), &positions);
+	db_load_positions(sqlobj_userinfo_db, cardid, &positions);
 	// to be continued ...
 	// 根据positions，生成轨迹json串
 
@@ -93,44 +93,83 @@ static int tbHistoricExperience_transfer(char * cardid, scores_st scores)
 
 }
 
-// 将user_info_db中临时存储的tbVisitorScore表中内容转移到venue_db库中的tbVisitorScore表中
-static int tbVisitorScore_transfer(char * cardid, scores_t scores)
+static int tbAnalyse_transfer(int cardid)
 {
-	if (NULL == scores)
-	{
-		return -1;
-	}
+
 }
 
-// 将user_info_db中临时存储的tbVisitorActivity表中内容转移到venue_db库中的tbVisitorActivity表中
-static int tb_VisitorActivity_transfer(char * cardidi, visitrslt_t activities)
+
+static int stage_one_dojob(int cardid)
 {
-	if (NULL == activities)
-	{
-		return -1;
-	}
+	// 1. 删除user_info_db.tbtagmapping表中cardid对应记录
+	db_clear_tagmapping(sqlobj_userinfo_db, cardid);
+
+	// 2. 删除user_info_db.tbtraveler表中cardid对应记录（会触发tbtravlergroup表的变动？）
+	db_clear_traveler(sqlobj_userinfo_db, cardid);
+
+	// 3. 删除user_info_db.tbtagpos表中cardid对应记录
+	db_clear_visitor_tagpos(sqlobj_userinfo_db, cardid);
+
+	// 4. 删除venue_db.visitoractivity表中cardid对应记录
+	db_clear_visitor_activtiy(sqlobj_venue_db, cardid);
+
+	// 5. 删除venue_db.visitorscore表中cardid对应记录
+	db_clear_scores(sqlobj_venue_db, cardid);
 }
+
+
+static int stage_two_dojob(int cardid)
+{
+	/*********** 第一步，相关数据提取整合与转移 ************/
+	scores_st scores;
+	db_load_scores(sqlobj_venue_db, cardid, &scores);
+
+	// 1. 向venue_db.tbAnalyse表中插入数据，供统计分析
+	// 数据源自user_info_db.tbTravelrScore表
+	tbAnalyse_transfer(cardid, scores);
+
+	// 2. 向venue_db.tbHistoricExperience表中插入数据，供历史查询
+	// 数据源自user_info_db.tbTravelrScore、tbtagpos、tbtagmapping、tbsettledorder、tbtraveler表等
+	tbHistoricExperience_transfer(cardid, scores);
+
+	/*********** 第二步，删除卡号相关各种数据，实现退卡 ************/
+
+	// 3. 删除user_info_db.tbtagmapping表中cardid对应记录
+	db_clear_tagmapping(sqlobj_userinfo_db, cardid);
+
+	// 4. 删除user_info_db.tbtraveler表中cardid对应记录（会触发tbtravlergroup表的变动？）
+	db_clear_traveler(sqlobj_userinfo_db, cardid);
+
+	// 5. 删除user_info_db.tbtagpos表中cardid对应记录
+	db_clear_visitor_tagpos(sqlobj_userinfo_db, cardid);
+
+	// 6. 删除user_info_db.tbTravelerScore表中cardid对应记录
+	db_clear_travelerscores(sqlobj_userinfo_db, cardid);
+}
+
+#define STAGE_ONE	1	
 
 void dojob(job_t job)
 {
 	if (job == NULL) return;
 
-	char *cardid = job->cardid;
-	scores_st scores;
-	visitrslt_st activities[128];
+	int cardid = atoi(job->cardid);
 
-	// 如果在scene_server存库时同时存了两份到不同的库中，则1和2这两个步骤可以在此处略去
+#if STAGE_ONE
 
-	// 1. 将user_info_db库中的tbvisitoractivity表相关内容转移到venue_db库中的tbvisitoractivity表内
-	db_load_scores(sqlobj_venue_db, atoi(cardid), &scores);		
-	tbVisitorScore_transfer(cardid, &scores);
+	// 阶段一的实现：仅仅实现前台自动退卡系统的退卡与成绩打印。原系统无法查询历史成绩（与轨迹）。
+	// 所以此处仅实现退卡与原数据的删除即可，无需转移任何数据
 
-	// 2. 将user_info_db库中的tbvisitorscore表相关内容转移到venue_db库中的tbvisitorscore表内
-	db_load_visitor_activity(sqlobj_venue_db, atoi(cardid), activities, sizeof(activities) / sizeof(activities[0]));
-	tb_VisitorActivity_transfer(cardid, activities);
+	stage_one_dojob(cardid);
 
-	// 3. 向venue_db库：tbHistoricExperience表中插入数据
-	tbHistoricExperience_transfer(cardid,scores);
+#else
+
+	// 阶段二的实现：最终升级后需要做的工作，即采用新的数据库，新的流程实现数据提取、整合、转移与退卡操作
+	// 该阶段下，venue_db.visitoractivity弃用，visitorscore表由venue_db库移动到user_info_db中
+
+	stage_two_dojob(cardid);	
+
+#endif
 }
 
 

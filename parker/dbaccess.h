@@ -29,6 +29,14 @@ int db_clear_visitor_activtiy(mysqlquery_t dbinst,int userid);
 
 int db_clear_scores(mysqlquery_t dbinst,int cardid);
 
+int db_clear_visitor_tagpos(mysqlquery_t dbinst, int cardid); // ywy 2018-10-11
+
+int db_clear_traveler(mysqlquery_t dbinst, int cardid);	// ywy 2018-10-11
+
+int db_clear_tagmapping(mysqlquery_t dbinst, int cardid);	// ywy 2018-10-11
+
+int db_clear_travelerscores(mysqlquery_t dbinst, int cardid);	// ywy 2018-10-11
+
 int db_load_statistic_scene_scores(mysqlquery_t dbinst,int sceneid,scoredeploy_st*out);
 
 int db_load_statistic_scene_visitors(mysqlquery_t dbinst,int sceneid,agedeploy_st*out);
