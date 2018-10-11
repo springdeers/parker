@@ -16,12 +16,12 @@
 #include "orderquery.h"
 #include "userquery.h"
 #include "datatransfers.h"
+#include "tool.h"
 
-mysqlquery_t sqlobj_venue_db = NULL;
+mysqlquery_t sqlobj_venue_db    = NULL;
 mysqlquery_t sqlobj_userinfo_db = NULL;
 config_st    g_conf;
 log_t        g_log;
-transfer_t   g_transfer = NULL;
 
 typedef struct _tick_st{
 	TIMEVAL tv;
@@ -43,6 +43,8 @@ void init_winsocklib()
 
 int _tmain(int argc, _TCHAR* argv[])
 {	
+	router_t router = NULL;
+
 	if (!setup_config("parker.json", &g_conf)) {
 		printf("err : load ./parker.json file failed.  exit!\n");
 		exit(1);
@@ -54,13 +56,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		printf("open logfile failed. log goto stdout instead.\n");
 	}
 
-	g_transfer = transfer_new();	// 历史数据转移
-	if (!g_transfer)
-	{
-		printf("err : transfer_new() failed.  exit!\n");
-		exit(1);
-	}
-
 	init_winsocklib();
 	
 	sqlobj_venue_db    = mysqldb_connect_init(g_conf.venue_db_ip, g_conf.venue_db_port, g_conf.venue_db_username, g_conf.venue_db_userpwd, g_conf.venue_db_name, mysql_querycallback);    	
@@ -69,12 +64,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	//开启后台的数据转移任务.
 	transfers_startup(&g_conf);
 
-	router_setup();
+	router = router_setup();
 	//启动服务在地址 127.0.0.1:9000 上
 	start_httpd("0.0.0.0",g_conf.svrport , httpd_callback, NULL);
 
 	//while (1){ Sleep(1); }
 	transfers_free();
+
+	router_free(router);
+
 #ifdef WIN32
 	WSACleanup();
 #endif
@@ -131,16 +129,11 @@ void httpd_callback(struct evhttp_request* req, void* arg)
 	route(router_object(),path,&kvq,req,arg);
 }
 
-#define _strftime_ymdhms(timestr){\
-	time_t now =time(NULL);\
-	strftime(timestr,sizeof(timestr),"%Y-%m-%d %H:%M:%S",localtime(&now));\
-}
-
 void mysql_querycallback(void* conn,int code)
 {
 	time_t now = time(NULL);
 	
-	if(code == eSqlQueryerr_errorquery||code == eSqlQueryerr_errorping){		
+	if(code == eSqlQueryerr_errorquery||code == eSqlQueryerr_errorping){
 		mysqlquery_t conn = NULL;
 
 		/*mysqldb_close(sqlobj_venue_db);

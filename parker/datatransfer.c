@@ -3,6 +3,7 @@
 #include "event2/buffer.h"
 #include "membuff.h"
 #include "posrslt.h"
+#include <sys/timeb.h>
 
 extern mysqlquery_t sqlobj_venue_db;
 extern mysqlquery_t sqlobj_userinfo_db;
@@ -11,8 +12,10 @@ static membuff_t g_membuffer_score = NULL;
 
 #define abstime_set(__time_,__timeout_ms_)\
 {\
-	__time_.tv_sec = time(NULL) + __timeout_ms_ / 1000;\
-	__time_.tv_nsec = (__timeout_ms_ % 1000) * 1000000;\
+	struct _timeb currSysTime;\
+	_ftime(&currSysTime);\
+	__time_.tv_sec = currSysTime.time + (currSysTime.millitm + __timeout_ms_) / 1000; \
+	__time_.tv_nsec = ((currSysTime.millitm + __timeout_ms_) % 1000) * 1000000;\
 }
 
 static void dojob(job_t job);
@@ -172,8 +175,6 @@ void dojob(job_t job)
 #endif
 }
 
-
-
 static void* _worker(void* param)
 {
 	transfer_t transfer = (transfer_t)param;
@@ -189,7 +190,7 @@ static void* _worker(void* param)
 		
 		while (jqueue_size(transfer->_workqueue) == 0 && wait == 0 )//predicate in critical area..
 		{
-			abstime_set(abstime, 1000);//未来1000ms时刻。
+			abstime_set(abstime, 300);//未来300ms时刻。
 			
 			wait = pthread_cond_timedwait(&transfer->_cond, &transfer->_mt_signal, &abstime);
 		}
@@ -231,6 +232,8 @@ transfer_t transfer_init(transfer_t transfer)
 	pthread_cond_init(&transfer->_cond, NULL);
 
 	pthread_mutex_init(&transfer->_mt_signal, NULL);
+
+	return transfer;
 }
 
 transfer_t transfer_clear(transfer_t transfer)
@@ -246,6 +249,8 @@ transfer_t transfer_clear(transfer_t transfer)
 	pthread_mutex_destroy(&transfer->_mt_signal);
 
 	pthread_cond_destroy(&transfer->_cond);
+
+	return transfer;
 }
 
 transfer_t transfer_new()
@@ -316,5 +321,5 @@ int  transfer_jobs_remain_cnt(transfer_t transfer)
 {
 	if (transfer == 0) return 0;
 
-	return jqueue_size(transfer->_workingqueue);
+	return jqueue_size(transfer->_workingqueue) + jqueue_size(transfer->_workqueue);
 }

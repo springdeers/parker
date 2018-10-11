@@ -697,12 +697,9 @@ int db_query_unsettled_orders(mysqlquery_t dbinst, char* where, unsettled_order_
 		while ((dbinst->m_row = mysql_fetch_row(dbinst->m_res)) != NULL)
 		{
 			//try this instead...
-			for (int c = 0; c < _unsettled_orders_fields_cnt; c++){
-				if (dbinst->m_row[c])
-					membuff_add_printf(mb, "%s,", dbinst->m_row[c]);
-				else
-					membuff_add_printf(mb, "%s,", "");	
-			}
+			for (int c = 0; c < _unsettled_orders_fields_cnt; c++)
+				membuff_add_printf(mb, "%s,", dbinst->m_row[c] ? dbinst->m_row[c] : "");
+			
 			sscanf(mb->data, _unsettled_orders_fields_comma, _unsettled_orders_values_ptr((&(*outorders)[ndx])));
 			//end try this instead...
 
@@ -930,7 +927,6 @@ int db_delete_settled_orders(mysqlquery_t dbinst, char* orderno, char* username)
 			" where orderno=%s AND username=%s", orderno, username);
 	}
 
-
 	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
 	{
 		return _QOK;
@@ -976,8 +972,8 @@ int db_save_card(mysqlquery_t dbinst, char * cardid, char* cardsn)
 	if (cardsn == NULL) cardsn = "";
 	if (cardid == NULL) cardid = "";
 
-	current_time_str(timestr);
-	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "INSERT INTO tbCard(cardid,cardsn,ctime) VALUES(%s,%s,%s)", cardid, cardsn, timestr);
+	//current_time_str(timestr);
+	printn += sprintf_s(sql + printn, sizeof(sql) - printn, "INSERT INTO tbCard(cardid,cardsn) VALUES(%s,%s)", cardid, cardsn);
 
 	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
 	{
@@ -1081,11 +1077,11 @@ int db_query_card(mysqlquery_t dbinst, char*cardid, char* cardsn, card_t* cards,
 	if (dbinst == NULL || (cardsn == NULL && cardid == NULL)) return _QFAILE;
 
 	if (cardsn == NULL)
-		printn += sprintf_s(sql + printn, sizeof(sql) - printn,"SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardid=%s", cardid);
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn,"SELECT (cardid,cardsn,uptime) FROM tbCard WHERE cardid=%s", cardid);
 	else if (cardid == NULL)
-		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardsn=%s", cardsn);
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime) FROM tbCard WHERE cardsn=%s", cardsn);
 	else
-		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime,ctime) FROM tbCard WHERE cardsn=%s AND cardid=%s", cardsn, cardid);
+		printn += sprintf_s(sql + printn, sizeof(sql) - printn, "SELECT (cardid,cardsn,uptime) FROM tbCard WHERE cardsn=%s AND cardid=%s", cardsn, cardid);
 
 	if (mysql_real_query(dbinst->m_con, sql, strlen(sql)) == 0)
 	{
@@ -1100,7 +1096,7 @@ int db_query_card(mysqlquery_t dbinst, char*cardid, char* cardsn, card_t* cards,
 			if (dbinst->m_row[0]) strcpy_s((*cards)[ndx].cardid, sizeof((*cards)[ndx].cardid), dbinst->m_row[0]);
 			if (dbinst->m_row[1]) strcpy_s((*cards)[ndx].cardsn, sizeof((*cards)[ndx].cardsn), dbinst->m_row[1]);
 			if (dbinst->m_row[2]) strcpy_s((*cards)[ndx].utime,  sizeof((*cards)[ndx].utime),  dbinst->m_row[2]);
-			if (dbinst->m_row[3]) strcpy_s((*cards)[ndx].ctime,  sizeof((*cards)[ndx].ctime),  dbinst->m_row[3]);
+			//if (dbinst->m_row[3]) strcpy_s((*cards)[ndx].ctime,  sizeof((*cards)[ndx].ctime),  dbinst->m_row[3]);
 			ndx++;
 		}
 		mysql_free_result(dbinst->m_res);
