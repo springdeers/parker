@@ -17,12 +17,12 @@
 #include "struct.h"
 #include "mysqldb.h"
 #include "dbaccess.h"
-#include "datatransfer.h"
+#include "datatransfers.h"
 
 extern mysqlquery_t sqlobj_venue_db;
 extern mysqlquery_t sqlobj_userinfo_db;
 static membuff_t g_membuffer = NULL;
-extern transfer_t g_transfer;
+//extern transfer_t g_transfers;
 
 #define NULL 0
 
@@ -287,7 +287,7 @@ int user_backcard(struct evkeyvalq*kvq, struct evhttp_request* req, void* param)
 	// 将要退卡的cardid加入待处理队列中
 	job_st job;
 	memcpy(job.cardid, cardid, sizeof(cardid));
-	transfer_postAjob(g_transfer,job);
+	transfers_pushAjob(job);
 
 	return eRoute_success;
 }
