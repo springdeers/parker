@@ -1,0 +1,92 @@
+Fri Oct 26 15:45:28 2018 [notice] connected db ok
+
+Fri Oct 26 15:45:28 2018 [notice] connected db ok
+
+Fri Oct 26 15:46:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:46:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:47:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:47:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:48:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:48:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:49:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:49:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:50:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:50:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:51:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:51:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:52:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:52:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:53:15 2018 [notice] serve path /user/score code[1] failed
+Fri Oct 26 15:53:21 2018 [notice] serve path /user/backcard code[1] failed
+Fri Oct 26 15:53:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:53:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:54:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:54:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 15:55:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 15:55:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 16:01:25 2018 [notice] connected db ok
+
+Fri Oct 26 16:01:25 2018 [notice] connected db ok
+
+Fri Oct 26 17:14:21 2018 [notice] connected db ok
+
+Fri Oct 26 17:14:21 2018 [notice] connected db ok
+
+Fri Oct 26 17:14:28 2018 [notice] serve path /user/score code[1] failed
+Fri Oct 26 17:14:29 2018 [notice] serve path /user/backcard code[1] failed
+Fri Oct 26 17:15:22 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:15:22 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:16:23 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:16:23 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:17:24 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:17:24 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:18:24 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:18:24 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:19:25 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:19:25 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:20:26 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:20:26 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:21:27 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:21:27 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:22:28 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:22:28 2018 [notice] DataBase [user_info_db] ping code 0[success]
+
+Fri Oct 26 17:23:29 2018 [notice] DataBase [venue_db] ping code 0[success]
+
+Fri Oct 26 17:23:29 2018 [notice] DataBase [user_info_db] ping code 0[success]
+

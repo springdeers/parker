@@ -12,10 +12,10 @@
 	"userinfo_db_userpwd"  :"Aa123456",
 	"credit_proportion" 	:"0.2",
 	"grade_proportion"  	:"0.8",
-	"score_class_A":"优秀",
-	"score_class_B":"良好",
-	"score_class_C":"良好",
-	"score_suggestion_A":"继续保持,不要骄傲哦~",
-	"score_suggestion_B":"表现不错,继续努力吧!",
-	"score_suggestion_C":"好好学习,下次可以更棒!"
+	"score_class_A":"Great",
+	"score_class_B":"Good",
+	"score_class_C":"Good",
+	"score_suggestion_A":"Excellent! Keep Going!",
+	"score_suggestion_B":"Good job!You can get better!",
+	"score_suggestion_C":"Practice makes perfect! Study more and excersice more!"
 }
